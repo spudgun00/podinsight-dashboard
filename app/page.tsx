@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import { TrendingUp, BarChart2, Zap, CheckCircle, Download, ImageIcon, FileText, Link } from "lucide-react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { MetricCard } from "@/components/dashboard/metric-card"
-import { TopicVelocityChartWithAPI } from "@/components/dashboard/topic-velocity-chart-with-api"
+import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
 import { useEffect, useState, useRef } from "react"
 
 const containerVariants = {
@@ -140,7 +140,7 @@ export default function DashboardPage() {
             <MetricCard title="Insights Generated" value="Real-time" icon={<Zap size={24} />} animation="pulse" />
             <MetricCard title="Data Freshness" value="Live" icon={<CheckCircle size={24} />} animation="pulse" />
           </motion.div>
-          <TopicVelocityChartWithAPI selectedTimeRange={selectedTimeRange} />
+          <TopicVelocityChartFullV0 selectedTimeRange={selectedTimeRange} />
 
           <footer className="mt-8 text-center text-sm text-white/50">
             <p>Last updated: {lastUpdated} seconds ago. Tracking 5 topics across 29 podcasts.</p>
