@@ -118,7 +118,7 @@ export function TopicVelocityChartWithAPI({ selectedTimeRange }: TopicVelocityCh
 
   // Find top performer
   const topPerformer = latestTrends.reduce((max, curr) => 
-    parseFloat(curr.change) > parseFloat(max.change) ? curr : max
+    parseFloat(String(curr.change)) > parseFloat(String(max.change)) ? curr : max
   , latestTrends[0])
 
   return (

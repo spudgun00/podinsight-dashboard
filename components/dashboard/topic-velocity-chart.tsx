@@ -15,7 +15,7 @@ import {
   ReferenceDot,
 } from "recharts"
 import { topicVelocityData, previousQuarterData, topicColors } from "@/lib/mock-data"
-import type { TopicData } from "@/lib/types"
+import type { TopicData } from "@/lib/v0-types"
 
 const topics = Object.keys(topicColors) as Array<keyof TopicData & keyof typeof topicColors>
 
@@ -42,9 +42,9 @@ const getVelocityBadge = (topicName: string) => {
   const len = data.length
 
   // Get last 3 weeks of data for trend analysis
-  const recent = data[len - 1][topicName as keyof TopicData]
-  const prev1 = data[len - 2][topicName as keyof TopicData]
-  const prev2 = data[len - 3][topicName as keyof TopicData]
+  const recent = Number(data[len - 1][topicName as keyof TopicData])
+  const prev1 = Number(data[len - 2][topicName as keyof TopicData])
+  const prev2 = Number(data[len - 3][topicName as keyof TopicData])
 
   // Calculate growth rates
   const recentGrowth = ((recent - prev1) / prev1) * 100
@@ -113,8 +113,8 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
     const isHovered = hoveredLine === value
 
     // Calculate trend percentage
-    const lastWeek = topicVelocityData[11][value as keyof TopicData]
-    const prevWeek = topicVelocityData[10][value as keyof TopicData]
+    const lastWeek = Number(topicVelocityData[11][value as keyof TopicData])
+    const prevWeek = Number(topicVelocityData[10][value as keyof TopicData])
     const change = (((lastWeek - prevWeek) / prevWeek) * 100).toFixed(0)
     const arrow = Number(change) > 0 ? "↑" : "↓"
     const colorClass = Number(change) > 0 ? "text-green-400" : "text-red-400"

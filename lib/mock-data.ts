@@ -1,4 +1,4 @@
-import type { TopicData } from "./types"
+import type { TopicData } from "./v0-types"
 
 export const topicVelocityData: TopicData[] = [
   { week: "W1", "AI Agents": 30, "Capital Efficiency": 45, DePIN: 15, "B2B SaaS": 25 },
@@ -24,7 +24,7 @@ export const previousQuarterData: TopicData[] = [
   { week: "W5", "AI Agents": 30, "Capital Efficiency": 46, DePIN: 15, "B2B SaaS": 30 },
   { week: "W6", "AI Agents": 32, "Capital Efficiency": 45, DePIN: 18, "B2B SaaS": 32 },
   { week: "W7", "AI Agents": 35, "Capital Efficiency": 44, DePIN: 17, "B2B SaaS": 34 },
-  { week: "W8", "AI Agents": 38, 'Capital Efficiency": 43, DePIN': 20, "B2B SaaS": 36 },
+  { week: "W8", "AI Agents": 38, "Capital Efficiency": 43, DePIN: 20, "B2B SaaS": 36 },
   { week: "W9", "AI Agents": 40, "Capital Efficiency": 42, DePIN: 19, "B2B SaaS": 38 },
   { week: "W10", "AI Agents": 42, "Capital Efficiency": 41, DePIN: 22, "B2B SaaS": 40 },
   { week: "W11", "AI Agents": 45, "Capital Efficiency": 40, DePIN: 21, "B2B SaaS": 42 },

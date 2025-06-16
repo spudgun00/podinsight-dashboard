@@ -6,7 +6,7 @@ import { motion, animate } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { useEffect, useState } from "react"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
-import type { MetricCardProps } from "@/lib/types"
+import type { MetricCardProps } from "@/lib/v0-types"
 import { topicVelocityData } from "@/lib/mock-data"
 
 const AnimatedNumber = ({ value }: { value: number }) => {
