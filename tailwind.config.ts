@@ -40,12 +40,27 @@ const config: Config = {
           "0%, 100%": { transform: "translate(0, 0) scale(1)", opacity: "0.03" },
           "50%": { transform: "translate(40px, 20px) scale(0.9)", opacity: "0.05" },
         },
+        "pulse-glow": {
+          "0%": {
+            transform: "scale(1)",
+            opacity: "1",
+          },
+          "50%": {
+            transform: "scale(1.2)",
+            opacity: "0.8",
+          },
+          "100%": {
+            transform: "scale(1)",
+            opacity: "1",
+          },
+        },
       },
       animation: {
         "float-slow": "float-slow 20s ease-in-out infinite",
         "float-medium": "float-medium 15s ease-in-out infinite",
         "float-fast": "float-fast 10s ease-in-out infinite",
         "float-reverse": "float-reverse 18s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
       },
     },
   },

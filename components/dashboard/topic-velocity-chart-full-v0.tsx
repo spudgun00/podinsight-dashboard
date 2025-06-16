@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils"
 
 interface TopicVelocityChartProps {
   selectedTimeRange: "1M" | "3M" | "6M"
+  onNotablePerformerChange?: (performer: { topic: string; change: string; arrow: string; positive: boolean; data: any[]; color: string }) => void
 }
 
 // Generate insights based on actual data
@@ -160,7 +161,7 @@ const customStyles = `
   }
 `
 
-export function TopicVelocityChartFullV0({ selectedTimeRange }: TopicVelocityChartProps) {
+export function TopicVelocityChartFullV0({ selectedTimeRange, onNotablePerformerChange }: TopicVelocityChartProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [data, setData] = useState<any[]>([])
   const [previousData, setPreviousData] = useState<any[]>([])
@@ -337,7 +338,7 @@ export function TopicVelocityChartFullV0({ selectedTimeRange }: TopicVelocityCha
 
   // Calculate period-based trends (not just last week)
   const calculatePeriodTrends = () => {
-    if (data.length < 2) return DEFAULT_TOPICS.map(topic => ({ topic, change: 0, arrow: "→", positive: false, absoluteChange: 0 }))
+    if (data.length < 2) return DEFAULT_TOPICS.map(topic => ({ topic, change: 0, arrow: "→", positive: false, absoluteChange: 0, percentChange: 0 }))
     
     // Get first and last data points based on time range
     const firstWeek = data[0]
@@ -370,6 +371,23 @@ export function TopicVelocityChartFullV0({ selectedTimeRange }: TopicVelocityCha
     const currAbsolute = Math.abs(curr.percentChange || 0)
     return currAbsolute > notableAbsolute ? curr : notable
   }, periodTrends[0])
+
+  // Extract sparkline data for notable performer
+  useEffect(() => {
+    if (onNotablePerformerChange && notablePerformer && data.length > 0) {
+      const sparklineData = data.map(week => ({
+        value: week[notablePerformer.topic] || 0
+      }))
+      onNotablePerformerChange({
+        topic: notablePerformer.topic,
+        change: notablePerformer.change,
+        arrow: notablePerformer.arrow,
+        positive: notablePerformer.positive,
+        data: sparklineData,
+        color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS]
+      })
+    }
+  }, [notablePerformer, data, onNotablePerformerChange])
 
   // Calculate week-over-week trends for legend
   const weeklyTrends = DEFAULT_TOPICS.map(topic => {
@@ -450,7 +468,10 @@ export function TopicVelocityChartFullV0({ selectedTimeRange }: TopicVelocityCha
                 <p className="text-lg font-semibold" style={{ color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] }}>
                   {notablePerformer.topic}
                 </p>
-                <p className="text-2xl font-bold" style={{ color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] }}>
+                <p className={cn(
+                  "text-2xl font-bold",
+                  notablePerformer.positive ? "text-green-400" : "text-red-400"
+                )}>
                   {notablePerformer.arrow}{notablePerformer.change}%
                 </p>
                 <p className="text-sm font-medium text-white/60">({selectedTimeRange})</p>
@@ -486,16 +507,26 @@ export function TopicVelocityChartFullV0({ selectedTimeRange }: TopicVelocityCha
         </p>
         <div className="flex gap-1 ml-4 flex-shrink-0">
           {(insights.length > 0 ? insights : [""]).map((_, index) => (
-            <div
+            <button
               key={index}
+              onClick={() => setCurrentInsightIndex(index)}
               className={cn(
-                "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                index === currentInsightIndex ? "bg-purple-600" : "bg-gray-600"
+                "w-2 h-2 rounded-full transition-all duration-300 hover:scale-125",
+                index === currentInsightIndex ? "bg-purple-600" : "bg-gray-600 hover:bg-gray-500"
               )}
+              aria-label={`Go to insight ${index + 1}`}
             />
           ))}
         </div>
       </div>
+
+      {/* Comparison Mode Indicator */}
+      {showComparison && (
+        <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-2 rounded-lg mb-4 flex items-center gap-2 text-sm">
+          <span className="text-blue-400">📊 Comparison Mode:</span>
+          <span className="text-gray-300">Showing previous {selectedTimeRange} period as dashed lines</span>
+        </div>
+      )}
 
       <div
         className={cn(
@@ -519,10 +550,10 @@ export function TopicVelocityChartFullV0({ selectedTimeRange }: TopicVelocityCha
         <button
           onClick={() => setShowComparison(!showComparison)}
           className={cn(
-            "absolute top-4 right-4 text-3xl transition-all duration-200 hover:text-gray-200 active:scale-95 z-20",
-            showComparison ? "text-blue-500" : "text-gray-400"
+            "absolute top-4 right-4 text-2xl transition-all duration-200 hover:text-gray-200 active:scale-95 z-20 p-2 rounded-lg",
+            showComparison ? "text-blue-400 bg-blue-500/20 hover:bg-blue-500/30" : "text-gray-400 hover:bg-gray-700/50"
           )}
-          title="Compare to previous period"
+          title={showComparison ? "Hide comparison" : "Compare to previous period"}
         >
           ⟳
         </button>
@@ -579,10 +610,12 @@ export function TopicVelocityChartFullV0({ selectedTimeRange }: TopicVelocityCha
               dataKey="week" 
               stroke="rgba(255,255,255,0.5)"
               tick={{ fill: 'rgba(255,255,255,0.5)' }}
+              label={{ value: 'Week', position: 'insideBottom', offset: -5, style: { fill: 'rgba(255,255,255,0.5)' } }}
             />
             <YAxis 
               stroke="rgba(255,255,255,0.5)"
               tick={{ fill: 'rgba(255,255,255,0.5)' }}
+              label={{ value: 'Mentions', angle: -90, position: 'insideLeft', style: { fill: 'rgba(255,255,255,0.5)' } }}
             />
             <Tooltip
               contentStyle={{
@@ -649,12 +682,12 @@ export function TopicVelocityChartFullV0({ selectedTimeRange }: TopicVelocityCha
                   dataKey={topic}
                   data={previousData}
                   stroke={TOPIC_COLORS[topic as keyof typeof TOPIC_COLORS]}
-                  strokeWidth={2}
-                  strokeOpacity={0.3}
-                  strokeDasharray="5 5"
+                  strokeWidth={1.5}
+                  strokeOpacity={0.4}
+                  strokeDasharray="3 6"
                   dot={false}
                   hide={hiddenTopics.includes(topic)}
-                  name={`${topic} (Last Quarter)`}
+                  name={`${topic} (Previous Period)`}
                 />
               ))
             }

@@ -22,6 +22,14 @@ export default function DashboardPage() {
   const [selectedTimeRange, setSelectedTimeRange] = useState<"1M" | "3M" | "6M">("3M")
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const exportDropdownRef = useRef<HTMLDivElement>(null)
+  const [notablePerformer, setNotablePerformer] = useState<{
+    topic: string
+    change: string
+    arrow: string
+    positive: boolean
+    data: any[]
+    color: string
+  } | null>(null)
 
   // Handle export actions
   const handleExport = (type: "png" | "csv" | "link") => {
@@ -135,12 +143,21 @@ export default function DashboardPage() {
             initial="hidden"
             animate="visible"
           >
-            <MetricCard title="Trending Now" value="AI Agents" icon={<TrendingUp size={24} />} />
+            <MetricCard 
+              title="Trending Now" 
+              value={notablePerformer?.topic || "Loading..."} 
+              icon={<TrendingUp size={24} />} 
+              sparklineData={notablePerformer?.data}
+              sparklineColor={notablePerformer?.color}
+            />
             <MetricCard title="Episodes Analyzed" value={1171} icon={<BarChart2 size={24} />} animation="count-up" />
             <MetricCard title="Insights Generated" value="Real-time" icon={<Zap size={24} />} animation="pulse" />
             <MetricCard title="Data Freshness" value="Live" icon={<CheckCircle size={24} />} animation="pulse" />
           </motion.div>
-          <TopicVelocityChartFullV0 selectedTimeRange={selectedTimeRange} />
+          <TopicVelocityChartFullV0 
+            selectedTimeRange={selectedTimeRange} 
+            onNotablePerformerChange={setNotablePerformer}
+          />
 
           <footer className="mt-8 text-center text-sm text-white/50">
             <p>Last updated: {lastUpdated} seconds ago. Tracking 5 topics across 29 podcasts.</p>
