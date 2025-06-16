@@ -18,4 +18,5 @@ export const DEFAULT_TOPICS = [
   "Capital Efficiency",
   "DePIN",
   "B2B SaaS",
+  "Crypto/Web3",
 ];
