@@ -15,7 +15,7 @@ import {
   ReferenceDot,
 } from "recharts"
 import { topicVelocityData, previousQuarterData, topicColors } from "@/lib/mock-data"
-import type { TopicData } from "@/lib/v0-types"
+import type { TopicData } from "@/lib/types"
 
 const topics = Object.keys(topicColors) as Array<keyof TopicData & keyof typeof topicColors>
 

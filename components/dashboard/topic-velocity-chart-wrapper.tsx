@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { TopicVelocityChart } from "./topic-velocity-chart"
 import { fetchTopicVelocity } from "@/lib/api"
 import { DEFAULT_TOPICS } from "@/lib/utils"
-import type { TopicData } from "@/lib/v0-types"
+import type { TopicData } from "@/lib/types"
 
 interface TopicVelocityChartWrapperProps {
   selectedTimeRange: "1M" | "3M" | "6M"

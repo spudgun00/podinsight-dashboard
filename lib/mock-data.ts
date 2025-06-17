@@ -1,4 +1,4 @@
-import type { TopicData } from "./v0-types"
+import type { TopicData } from "./types"
 
 export const topicVelocityData: TopicData[] = [
   { week: "W1", "AI Agents": 30, "Capital Efficiency": 45, DePIN: 15, "B2B SaaS": 25 },
