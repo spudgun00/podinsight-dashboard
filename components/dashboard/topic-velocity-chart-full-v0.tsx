@@ -380,7 +380,7 @@ export function TopicVelocityChartFullV0({ selectedTimeRange, onNotablePerformer
       }))
       onNotablePerformerChange({
         topic: notablePerformer.topic,
-        change: notablePerformer.change,
+        change: String(notablePerformer.change),
         arrow: notablePerformer.arrow,
         positive: notablePerformer.positive,
         data: sparklineData,
