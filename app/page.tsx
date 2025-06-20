@@ -5,6 +5,7 @@ import { TrendingUp, BarChart2, Zap, CheckCircle, Download, ImageIcon, FileText,
 import { DashboardHeader } from "@/components/dashboard/header"
 import { MetricCard } from "@/components/dashboard/metric-card"
 import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
+import { SentimentHeatmap } from "@/components/dashboard/sentiment-heatmap"
 import { useEffect, useState, useRef } from "react"
 
 const containerVariants = {
@@ -15,6 +16,24 @@ const containerVariants = {
       staggerChildren: 0.1,
     },
   },
+}
+
+// Generate mock sentiment data function
+const generateMockSentimentData = () => {
+  const topics = ["AI Agents", "Capital Efficiency", "DePIN", "B2B SaaS", "Crypto/Web3"]
+  const weeks = Array.from({length: 12}, (_, i) => {
+    const weekNum = i + 31 // Starting from week 31 to match current data timeframe
+    return `W${weekNum}`
+  })
+  
+  return topics.flatMap(topic => 
+    weeks.map(week => ({
+      topic,
+      week,
+      sentiment: Math.random() * 1.6 - 0.8, // -0.8 to 0.8 for realistic range
+      episodeCount: Math.floor(Math.random() * 20) + 1
+    }))
+  )
 }
 
 export default function DashboardPage() {
@@ -30,6 +49,7 @@ export default function DashboardPage() {
     data: any[]
     color: string
   } | null>(null)
+  const [sentimentData] = useState(generateMockSentimentData())
 
   // Handle export actions
   const handleExport = (type: "png" | "csv" | "link") => {
@@ -158,6 +178,22 @@ export default function DashboardPage() {
             selectedTimeRange={selectedTimeRange} 
             onNotablePerformerChange={setNotablePerformer}
           />
+
+          {/* Sentiment Heatmap */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-6"
+          >
+            <SentimentHeatmap 
+              data={sentimentData}
+              onCellClick={(topic, week) => {
+                console.log(`Clicked: ${topic} in ${week}`)
+                // Future: Show episode details
+              }}
+            />
+          </motion.div>
 
           <footer className="mt-8 text-center text-sm text-white/50">
             <p>Last updated: {lastUpdated} seconds ago. Tracking 5 topics across 29 podcasts.</p>
