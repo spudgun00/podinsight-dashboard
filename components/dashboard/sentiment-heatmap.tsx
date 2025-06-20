@@ -211,12 +211,15 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
         </div>
 
         {/* Heatmap Container */}
-        <div className="relative">
+        <div className="relative overflow-x-auto">
           {/* Grid */}
-          <div className="grid gap-1 mb-6" style={{ gridTemplateColumns: `200px repeat(${weeks}, minmax(40px, 1fr))` }}>
+          <div className="grid gap-1 mb-6 mx-auto" style={{ 
+            gridTemplateColumns: `150px repeat(${Math.min(weeks, 12)}, minmax(0, 1fr))`,
+            maxWidth: weeks <= 12 ? '100%' : '1200px'
+          }}>
             {/* Header row */}
             <div></div> {/* Empty corner */}
-            {weekLabels.map((week) => (
+            {weekLabels.slice(0, Math.min(weeks, 12)).map((week) => (
               <div key={week} className="text-xs text-gray-400 text-center py-1 font-mono">
                 {week}
               </div>
@@ -230,7 +233,7 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
                 </div>
 
                 {/* Sentiment cells */}
-                {weekLabels.map((week, weekIndex) => {
+                {weekLabels.slice(0, Math.min(weeks, 12)).map((week, weekIndex) => {
                   const dataPoint = getDataPoint(topic, week)
                   const sentiment = dataPoint?.sentiment ?? 0
 

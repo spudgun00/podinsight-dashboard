@@ -21,17 +21,23 @@ const containerVariants = {
 // Generate mock sentiment data function
 const generateMockSentimentData = () => {
   const topics = ["AI Agents", "Capital Efficiency", "DePIN", "B2B SaaS", "Crypto/Web3"]
-  const weeks = Array.from({length: 12}, (_, i) => {
-    const weekNum = i + 31 // Starting from week 31 to match current data timeframe
-    return `W${weekNum}`
-  })
+  const weeks = Array.from({length: 12}, (_, i) => `W${i + 1}`)
+  
+  // Create more realistic sentiment patterns
+  const sentimentPatterns: Record<string, () => number> = {
+    "AI Agents": () => 0.3 + Math.random() * 0.4, // Generally positive
+    "Capital Efficiency": () => Math.random() * 0.6 - 0.3, // Mixed
+    "DePIN": () => -0.2 + Math.random() * 0.6, // Slightly negative to neutral
+    "B2B SaaS": () => 0.2 + Math.random() * 0.3, // Stable positive
+    "Crypto/Web3": () => Math.random() * 1.4 - 0.7 // Volatile
+  }
   
   return topics.flatMap(topic => 
-    weeks.map(week => ({
+    weeks.map((week, i) => ({
       topic,
       week,
-      sentiment: Math.random() * 1.6 - 0.8, // -0.8 to 0.8 for realistic range
-      episodeCount: Math.floor(Math.random() * 20) + 1
+      sentiment: sentimentPatterns[topic](),
+      episodeCount: Math.floor(Math.random() * 15) + 5
     }))
   )
 }
