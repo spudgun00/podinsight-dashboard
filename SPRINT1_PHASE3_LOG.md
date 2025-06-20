@@ -89,7 +89,7 @@ This log documents the implementation of Phase 3 - Enhanced Visualizations for P
 
 ## Phase 3.3: Create Sentiment Heatmap 🔄
 
-### Status: READY FOR IMPLEMENTATION
+### Status: DOCUMENTATION COMPLETE - READY FOR NEXT SESSION
 **Planned Time**: 2 hours
 
 ### Completed Preparations
@@ -97,7 +97,9 @@ This log documents the implementation of Phase 3 - Enhanced Visualizations for P
 - ✅ Dashboard SIGNAL bar showing real correlations
 - ✅ UI improvements (comparison button, layout fixes)
 - ✅ Documentation updated
-- ✅ Ready for v0 component integration
+- ✅ Created V0_SENTIMENT_HEATMAP_PROMPT.md for v0 design
+- ✅ Created NEXT_SESSION_PROMPT_PHASE3_HEATMAP.md for Claude Code
+- ✅ Ready for new session to integrate v0 component
 
 ### Requirements
 - Grid: Topics (Y-axis) vs Weeks (X-axis)
@@ -107,10 +109,10 @@ This log documents the implementation of Phase 3 - Enhanced Visualizations for P
 - Smooth animations
 
 ### Next Steps
-1. Receive v0-designed sentiment heatmap component
-2. Integrate into dashboard with tabs: "Velocity" | "Sentiment"
-3. Share state with existing time range filter
-4. Add mock sentiment data generator
+1. User will create sentiment heatmap in v0 using V0_SENTIMENT_HEATMAP_PROMPT.md
+2. New Claude Code session will integrate it using NEXT_SESSION_PROMPT_PHASE3_HEATMAP.md
+3. Component will be added below the velocity chart
+4. Mock data will be used for Sprint 1
 
 ---
 
@@ -209,10 +211,12 @@ curl https://podinsight-api.vercel.app/api/signals?limit=5
 ## Next Steps
 
 1. ✅ Push all changes to GitHub
-2. ⏳ Await sentiment heatmap design from v0
-3. 📊 Integrate sentiment heatmap when ready
-4. 🧪 Full end-to-end testing
-5. 📝 Update documentation
+2. ✅ Created comprehensive documentation for handoff
+3. ⏳ User will design sentiment heatmap in v0
+4. ⏳ New Claude Code session will integrate the component
+5. 📊 Component will be positioned below velocity chart
+6. 🧪 Full end-to-end testing
+7. 📝 Update documentation
 
 ---
 
