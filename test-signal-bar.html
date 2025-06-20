@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGNAL Bar Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #e0e0e0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #111;
+        }
+        .signal-bar {
+            background: linear-gradient(to right, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            margin: 10px 0;
+        }
+        .signal-icon {
+            display: inline-block;
+            animation: pulse-lightning 3s ease-in-out infinite;
+            margin-right: 8px;
+            font-size: 20px;
+        }
+        @keyframes pulse-lightning {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                filter: brightness(1) drop-shadow(0 0 2px rgba(124, 58, 237, 0.8));
+            }
+            50% { 
+                transform: scale(1.2) rotate(5deg);
+                filter: brightness(1.5) drop-shadow(0 0 8px rgba(124, 58, 237, 1));
+            }
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .status.success { background: #065f46; color: #6ee7b7; }
+        .status.error { background: #7f1d1d; color: #fca5a5; }
+        .status.warning { background: #78350f; color: #fcd34d; }
+        code {
+            background: #1e1e1e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .insights-list {
+            list-style: none;
+            padding: 0;
+        }
+        .insights-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>SIGNAL Bar Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Mock Signal Bar (What it should look like)</h2>
+        <div class="signal-bar">
+            <span class="signal-icon">⚡</span>
+            <strong style="color: #a78bfa;">SIGNAL:</strong>
+            <span id="mockSignal">AI Agents and B2B SaaS discussed together in 67% of episodes</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. API Test Results</h2>
+        <div id="apiStatus">Testing API...</div>
+        <div id="apiResponse"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Signal Messages (when API is live)</h2>
+        <ul id="signalsList" class="insights-list">
+            <li>Waiting for API...</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Fallback Behavior</h2>
+        <p>When the signals API is not available, the dashboard should:</p>
+        <ul>
+            <li>✓ Show generated insights based on actual data</li>
+            <li>✓ Log a warning to console (not visible to users)</li>
+            <li>✓ Continue working normally</li>
+            <li>✓ Rotate through multiple insights every 10 seconds</li>
+        </ul>
+    </div>
+
+    <script>
+        // Mock signal messages for demonstration
+        const mockSignals = [
+            "AI Agents and B2B SaaS discussed together in 67% of episodes",
+            "DePIN seeing 3.2x surge in mentions this week",
+            "Capital Efficiency + AI Agents combo up 125% over last month",
+            "Crypto/Web3 dominates with 34% of all mentions, reflecting strong market focus",
+            "Market velocity at 28% average weekly growth, indicating high investor interest"
+        ];
+
+        // Rotate mock signals
+        let currentIndex = 0;
+        setInterval(() => {
+            currentIndex = (currentIndex + 1) % mockSignals.length;
+            document.getElementById('mockSignal').textContent = mockSignals[currentIndex];
+        }, 5000);
+
+        // Test API
+        async function testSignalsAPI() {
+            const apiStatus = document.getElementById('apiStatus');
+            const apiResponse = document.getElementById('apiResponse');
+            const signalsList = document.getElementById('signalsList');
+
+            try {
+                const response = await fetch('https://podinsight-api.vercel.app/api/signals');
+                
+                if (response.status === 404) {
+                    apiStatus.innerHTML = '<span class="status warning">API Not Deployed Yet</span> - This is expected';
+                    apiResponse.innerHTML = '<p>The signals endpoint will be available after deployment.</p>';
+                    
+                    // Show what the response would look like
+                    apiResponse.innerHTML += `
+                        <h4>Expected Response Structure:</h4>
+                        <pre style="background: #1e1e1e; padding: 10px; border-radius: 4px; overflow-x: auto;">
+{
+  "signals": {
+    "correlation": [
+      {
+        "topics": ["AI Agents", "B2B SaaS"],
+        "co_occurrence_percent": 67.5,
+        "episode_count": 45
+      }
+    ],
+    "spike": [
+      {
+        "topic": "DePIN",
+        "spike_factor": 3.2,
+        "current_week_mentions": 45
+      }
+    ]
+  },
+  "signal_messages": [
+    "AI Agents and B2B SaaS discussed together in 67% of episodes",
+    "DePIN seeing 3.2x surge in mentions this week"
+  ]
+}</pre>
+                    `;
+                } else if (response.ok) {
+                    const data = await response.json();
+                    apiStatus.innerHTML = '<span class="status success">API Live!</span>';
+                    
+                    if (data.signal_messages && data.signal_messages.length > 0) {
+                        signalsList.innerHTML = data.signal_messages
+                            .map(msg => `<li>${msg}</li>`)
+                            .join('');
+                    }
+                }
+            } catch (error) {
+                apiStatus.innerHTML = '<span class="status error">API Error</span>';
+                apiResponse.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        // Test on load
+        testSignalsAPI();
+
+        // Also test topic velocity API
+        async function testTopicVelocityAPI() {
+            try {
+                const response = await fetch('https://podinsight-api.vercel.app/api/topic-velocity?weeks=1');
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Topic Velocity API working:', data.metadata);
+                }
+            } catch (error) {
+                console.error('Topic Velocity API error:', error);
+            }
+        }
+
+        testTopicVelocityAPI();
+    </script>
+</body>
+</html>
