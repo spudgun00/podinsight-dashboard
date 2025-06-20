@@ -36,8 +36,8 @@ This log documents the implementation of Phase 3 - Enhanced Visualizations for P
 
 ## Phase 3.2: Create Signal Correlation Service ✅
 
-### Status: COMPLETED
-**Time Taken**: 1.5 hours
+### Status: COMPLETED + REFINED
+**Time Taken**: 2.5 hours (including refinements)
 
 ### Implementation Details
 
@@ -77,6 +77,13 @@ This log documents the implementation of Phase 3 - Enhanced Visualizations for P
 - Store as JSONB for flexibility
 - Generate human-readable messages in API layer
 - Graceful fallback to mock data
+
+### Refinements Made
+- **Signal Quality**: Implemented thresholds (>20% for correlations)
+- **Clear Language**: "94 co-occurrences" instead of vague terms
+- **Better Sorting**: Show most impressive correlations first
+- **Balanced Output**: Ensure 4-5 signals always display
+- **Growth Clarity**: "3→6 co-occurrences (+100%)" format
 
 ---
 
