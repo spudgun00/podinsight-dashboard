@@ -14,7 +14,7 @@ import {
   ReferenceLine,
   ReferenceDot,
 } from "recharts"
-import { fetchTopicVelocity } from "@/lib/api"
+import { fetchTopicVelocity, fetchTopicSignals } from "@/lib/api"
 import { DEFAULT_TOPICS, TOPIC_COLORS } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 
@@ -302,7 +302,20 @@ export function TopicVelocityChartFullV0({ selectedTimeRange, onNotablePerformer
           mostActiveWeek: maxWeek.week,
           trendingTopic,
         })
-        setInsights(generatedInsights)
+        // Fetch real signals from API
+        try {
+          const signalsResponse = await fetchTopicSignals()
+          if (signalsResponse.signal_messages && signalsResponse.signal_messages.length > 0) {
+            // Use real signal messages if available
+            setInsights(signalsResponse.signal_messages)
+          } else {
+            // Fall back to generated insights
+            setInsights(generatedInsights)
+          }
+        } catch (signalError) {
+          console.warn("Failed to fetch signals, using generated insights:", signalError)
+          setInsights(generatedInsights)
+        }
         
         // Generate previous quarter data for comparison
         const prevQuarterData = chartData.map((week, index) => {

@@ -23,3 +23,37 @@ export async function fetchTopicVelocity(
 
   return response.json();
 }
+
+export interface SignalsResponse {
+  signals: {
+    [key: string]: any[];
+  };
+  signal_messages: string[];
+  last_updated: string | null;
+  metadata: {
+    total_signals: number;
+    signal_types: string[];
+  };
+}
+
+export async function fetchTopicSignals(
+  signalType?: string,
+  limit: number = 10
+): Promise<SignalsResponse> {
+  const params = new URLSearchParams();
+  params.append("limit", limit.toString());
+  
+  if (signalType) {
+    params.append("signal_type", signalType);
+  }
+
+  const response = await fetch(`${API_URL}/api/signals?${params}`, {
+    next: { revalidate: 300 }, // Cache for 5 minutes
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch signals: ${response.statusText}`);
+  }
+
+  return response.json();
+}
