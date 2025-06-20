@@ -18,26 +18,26 @@ const containerVariants = {
   },
 }
 
-// Generate mock sentiment data function
+// Generate mock sentiment data function with deterministic values
 const generateMockSentimentData = () => {
   const topics = ["AI Agents", "Capital Efficiency", "DePIN", "B2B SaaS", "Crypto/Web3"]
   const weeks = Array.from({length: 12}, (_, i) => `W${i + 1}`)
   
-  // Create more realistic sentiment patterns
-  const sentimentPatterns: Record<string, () => number> = {
-    "AI Agents": () => 0.3 + Math.random() * 0.4, // Generally positive
-    "Capital Efficiency": () => Math.random() * 0.6 - 0.3, // Mixed
-    "DePIN": () => -0.2 + Math.random() * 0.6, // Slightly negative to neutral
-    "B2B SaaS": () => 0.2 + Math.random() * 0.3, // Stable positive
-    "Crypto/Web3": () => Math.random() * 1.4 - 0.7 // Volatile
+  // Use deterministic patterns based on week index
+  const sentimentPatterns: Record<string, (weekIndex: number) => number> = {
+    "AI Agents": (i) => 0.3 + (Math.sin(i * 0.5) * 0.2) + 0.2, // Generally positive with wave
+    "Capital Efficiency": (i) => Math.cos(i * 0.3) * 0.3, // Oscillating around 0
+    "DePIN": (i) => -0.2 + (i / 12) * 0.6, // Trending up from negative
+    "B2B SaaS": (i) => 0.35 + Math.sin(i * 0.7) * 0.15, // Stable positive
+    "Crypto/Web3": (i) => Math.sin(i * 0.8) * 0.7 // High volatility
   }
   
   return topics.flatMap(topic => 
     weeks.map((week, i) => ({
       topic,
       week,
-      sentiment: sentimentPatterns[topic](),
-      episodeCount: Math.floor(Math.random() * 15) + 5
+      sentiment: Number(sentimentPatterns[topic](i).toFixed(2)),
+      episodeCount: 10 + (i % 5) * 2 // Deterministic episode count
     }))
   )
 }
@@ -55,7 +55,12 @@ export default function DashboardPage() {
     data: any[]
     color: string
   } | null>(null)
-  const [sentimentData] = useState(generateMockSentimentData())
+  const [sentimentData, setSentimentData] = useState<ReturnType<typeof generateMockSentimentData>>([])
+  
+  // Generate data only on client side to avoid hydration mismatch
+  useEffect(() => {
+    setSentimentData(generateMockSentimentData())
+  }, [])
 
   // Handle export actions
   const handleExport = (type: "png" | "csv" | "link") => {
