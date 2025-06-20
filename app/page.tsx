@@ -7,6 +7,7 @@ import { MetricCard } from "@/components/dashboard/metric-card"
 import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
 import { SentimentHeatmap } from "@/components/dashboard/sentiment-heatmap"
 import { useEffect, useState, useRef } from "react"
+import { fetchSentimentAnalysis, type SentimentData } from "@/lib/api"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -18,29 +19,6 @@ const containerVariants = {
   },
 }
 
-// Generate mock sentiment data function with deterministic values
-const generateMockSentimentData = () => {
-  const topics = ["AI Agents", "Capital Efficiency", "DePIN", "B2B SaaS", "Crypto/Web3"]
-  const weeks = Array.from({length: 12}, (_, i) => `W${i + 1}`)
-  
-  // Use deterministic patterns based on week index
-  const sentimentPatterns: Record<string, (weekIndex: number) => number> = {
-    "AI Agents": (i) => 0.3 + (Math.sin(i * 0.5) * 0.2) + 0.2, // Generally positive with wave
-    "Capital Efficiency": (i) => Math.cos(i * 0.3) * 0.3, // Oscillating around 0
-    "DePIN": (i) => -0.2 + (i / 12) * 0.6, // Trending up from negative
-    "B2B SaaS": (i) => 0.35 + Math.sin(i * 0.7) * 0.15, // Stable positive
-    "Crypto/Web3": (i) => Math.sin(i * 0.8) * 0.7 // High volatility
-  }
-  
-  return topics.flatMap(topic => 
-    weeks.map((week, i) => ({
-      topic,
-      week,
-      sentiment: Number(sentimentPatterns[topic](i).toFixed(2)),
-      episodeCount: 10 + (i % 5) * 2 // Deterministic episode count
-    }))
-  )
-}
 
 export default function DashboardPage() {
   const [lastUpdated, setLastUpdated] = useState(0)
@@ -55,12 +33,31 @@ export default function DashboardPage() {
     data: any[]
     color: string
   } | null>(null)
-  const [sentimentData, setSentimentData] = useState<ReturnType<typeof generateMockSentimentData>>([])
+  const [sentimentData, setSentimentData] = useState<SentimentData[]>([])
+  const [isLoadingSentiment, setIsLoadingSentiment] = useState(true)
   
-  // Generate data only on client side to avoid hydration mismatch
+  // Fetch sentiment data from API
   useEffect(() => {
-    setSentimentData(generateMockSentimentData())
-  }, [])
+    const fetchSentiment = async () => {
+      setIsLoadingSentiment(true)
+      try {
+        // Map time ranges to weeks
+        const weeksMap = { "1M": 4, "3M": 12, "6M": 24 }
+        const weeks = weeksMap[selectedTimeRange]
+        
+        const response = await fetchSentimentAnalysis(weeks)
+        if (response.success && response.data) {
+          setSentimentData(response.data)
+        }
+      } catch (error) {
+        console.error("Failed to fetch sentiment data:", error)
+      } finally {
+        setIsLoadingSentiment(false)
+      }
+    }
+    
+    fetchSentiment()
+  }, [selectedTimeRange])
 
   // Handle export actions
   const handleExport = (type: "png" | "csv" | "link") => {
@@ -199,6 +196,7 @@ export default function DashboardPage() {
           >
             <SentimentHeatmap 
               data={sentimentData}
+              isLoading={isLoadingSentiment}
               onCellClick={(topic, week) => {
                 console.log(`Clicked: ${topic} in ${week}`)
                 // Future: Show episode details

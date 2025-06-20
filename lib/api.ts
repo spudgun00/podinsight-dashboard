@@ -28,6 +28,64 @@ export interface SignalsResponse {
   signals: {
     [key: string]: any[];
   };
+}
+
+export interface SentimentData {
+  topic: string;
+  week: string;
+  sentiment: number;
+  episodeCount: number;
+}
+
+export interface SentimentAnalysisResponse {
+  success: boolean;
+  data: SentimentData[];
+  metadata: {
+    weeks: number;
+    topics: string[];
+    generated_at: string;
+  };
+}
+
+export async function fetchSentimentAnalysis(
+  weeks: number = 12,
+  topics?: string[]
+): Promise<SentimentAnalysisResponse> {
+  const params = new URLSearchParams();
+  params.append("weeks", weeks.toString());
+  
+  // Add topics as array parameters
+  const topicsToUse = topics || ["AI Agents", "Capital Efficiency", "DePIN", "B2B SaaS", "Crypto/Web3"];
+  topicsToUse.forEach(topic => {
+    params.append("topics[]", topic);
+  });
+
+  try {
+    const response = await fetch(`${API_URL}/api/sentiment_analysis?${params}`, {
+      next: { revalidate: 300 }, // Cache for 5 minutes
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch sentiment data: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Error fetching sentiment data:", error);
+    // Return empty data on error
+    return {
+      success: false,
+      data: [],
+      metadata: {
+        weeks,
+        topics: topicsToUse,
+        generated_at: new Date().toISOString()
+      }
+    };
+  }
+}
+
+export interface SignalsData {
   signal_messages: string[];
   last_updated: string | null;
   metadata: {

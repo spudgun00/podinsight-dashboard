@@ -43,53 +43,6 @@ const getTextColor = (sentiment: number): string => {
   return "#FFFFFF" // White text on red/green
 }
 
-// Generate realistic mock sentiment data with patterns
-const generateMockSentimentData = (weeks: number): SentimentData[] => {
-  const topics = ["AI Agents", "Capital Efficiency", "DePIN", "B2B SaaS", "Crypto/Web3"]
-  const weekLabels = Array.from({ length: weeks }, (_, i) => `W${i + 1}`)
-
-  return topics.flatMap((topic) =>
-    weekLabels.map((week, weekIndex) => {
-      let baseSentiment = 0
-      const progress = weekIndex / (weeks - 1) // 0 to 1
-
-      // Define realistic patterns for each topic
-      switch (topic) {
-        case "AI Agents":
-          // Generally positive, trending up
-          baseSentiment = 0.2 + progress * 0.5 + Math.sin(weekIndex * 0.3) * 0.1
-          break
-        case "Capital Efficiency":
-          // Mixed, slightly declining
-          baseSentiment = 0.3 - progress * 0.4 + Math.sin(weekIndex * 0.5) * 0.2
-          break
-        case "DePIN":
-          // Recovering from negative
-          baseSentiment = -0.4 + progress * 0.7 + Math.cos(weekIndex * 0.4) * 0.1
-          break
-        case "B2B SaaS":
-          // Stable positive with slight cyclical pattern
-          baseSentiment = 0.3 + Math.sin(weekIndex * 0.6) * 0.2
-          break
-        case "Crypto/Web3":
-          // Volatile with overall slight upward trend
-          baseSentiment = -0.1 + progress * 0.3 + Math.sin(weekIndex * 0.8) * 0.4
-          break
-      }
-
-      // Add some noise but keep it realistic
-      const noise = (Math.random() - 0.5) * 0.2
-      const sentiment = Math.max(-1, Math.min(1, baseSentiment + noise))
-
-      return {
-        topic,
-        week,
-        sentiment,
-        episodeCount: Math.floor(Math.random() * 15) + 5,
-      }
-    }),
-  )
-}
 
 // Get trend direction
 const getTrendDirection = (current: number, previous: number): string => {
@@ -124,10 +77,10 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
 
   const weeks = getWeeksForRange(selectedTimeRange)
 
-  // Generate or use provided data
+  // Use provided data or empty array
   const heatmapData = useMemo(() => {
-    return data && data.length > 0 ? data : generateMockSentimentData(weeks)
-  }, [data, weeks])
+    return data || []
+  }, [data])
 
   const topics = ["AI Agents", "Capital Efficiency", "DePIN", "B2B SaaS", "Crypto/Web3"]
   const weekLabels = Array.from({ length: weeks }, (_, i) => `W${i + 1}`)
@@ -236,12 +189,13 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
                 {weekLabels.slice(0, Math.min(weeks, 12)).map((week, weekIndex) => {
                   const dataPoint = getDataPoint(topic, week)
                   const sentiment = dataPoint?.sentiment ?? 0
+                  const hasData = dataPoint !== undefined
 
                   const isHovered = hoveredCell?.topic === topic && hoveredCell?.week === week
                   const isSelected = selectedCell?.topic === topic && selectedCell?.week === week
 
-                  const backgroundColor = getSentimentColor(sentiment)
-                  const textColor = getTextColor(sentiment)
+                  const backgroundColor = hasData ? getSentimentColor(sentiment) : '#1a1a1a'
+                  const textColor = hasData ? getTextColor(sentiment) : '#666666'
 
                   return (
                     <div
@@ -262,10 +216,14 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
                     >
                       {/* Cell content */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-mono font-semibold" style={{ color: textColor }}>
-                          {sentiment >= 0 ? "+" : ""}
-                          {sentiment.toFixed(2)}
-                        </span>
+                        {hasData ? (
+                          <span className="text-xs font-mono font-semibold" style={{ color: textColor }}>
+                            {sentiment >= 0 ? "+" : ""}
+                            {sentiment.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-600">--</span>
+                        )}
                       </div>
                     </div>
                   )
