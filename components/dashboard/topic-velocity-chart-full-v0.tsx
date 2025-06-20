@@ -533,13 +533,13 @@ export function TopicVelocityChartFullV0({ selectedTimeRange, onNotablePerformer
         </div>
       </div>
 
-      {/* Comparison Mode Indicator */}
-      {showComparison && (
+      {/* Comparison Mode Indicator - Commented out for now to prevent jarring movement */}
+      {/* {showComparison && (
         <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-2 rounded-lg mb-4 flex items-center gap-2 text-sm">
           <span className="text-blue-400">📊 Comparison Mode:</span>
           <span className="text-gray-300">Showing previous {selectedTimeRange} period as dashed lines</span>
         </div>
-      )}
+      )} */}
 
       <div
         className={cn(
@@ -563,7 +563,7 @@ export function TopicVelocityChartFullV0({ selectedTimeRange, onNotablePerformer
         <button
           onClick={() => setShowComparison(!showComparison)}
           className={cn(
-            "absolute top-4 right-4 text-2xl transition-all duration-200 hover:text-gray-200 active:scale-95 z-20 p-2 rounded-lg",
+            "absolute top-4 right-4 text-3xl transition-all duration-200 hover:text-gray-200 active:scale-95 z-20 p-2 rounded-lg",
             showComparison ? "text-blue-400 bg-blue-500/20 hover:bg-blue-500/30" : "text-gray-400 hover:bg-gray-700/50"
           )}
           title={showComparison ? "Hide comparison" : "Compare to previous period"}
