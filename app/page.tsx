@@ -6,6 +6,7 @@ import { DashboardHeader } from "@/components/dashboard/header"
 import { MetricCard } from "@/components/dashboard/metric-card"
 import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
 import { SentimentHeatmap } from "@/components/dashboard/sentiment-heatmap"
+import { SearchCommandBar } from "@/components/dashboard/search-command-bar"
 import { useEffect, useState, useRef } from "react"
 import { fetchSentimentAnalysis, type SentimentData } from "@/lib/api"
 
@@ -105,6 +106,12 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="px-4 md:px-8 pb-12">
         <div className="max-w-7xl mx-auto">
+          {/* Search Command Bar */}
+          <SearchCommandBar 
+            onSearch={(query) => console.log('Search:', query)}
+            mode="inline"
+          />
+          
           {/* Controls positioned above metric cards */}
           <div className="flex justify-end items-center gap-2 mb-4">
             {/* Time Range Selector */}

@@ -61,7 +61,7 @@ export async function fetchSentimentAnalysis(
   });
 
   try {
-    const response = await fetch(`${API_URL}/api/sentiment_analysis?${params}`, {
+    const response = await fetch(`${API_URL}/api/sentiment_analysis_v2?${params}`, {
       next: { revalidate: 300 }, // Cache for 5 minutes
     });
 
@@ -97,7 +97,7 @@ export interface SignalsData {
 export async function fetchTopicSignals(
   signalType?: string,
   limit: number = 10
-): Promise<SignalsResponse> {
+): Promise<SignalsData> {
   const params = new URLSearchParams();
   params.append("limit", limit.toString());
   
