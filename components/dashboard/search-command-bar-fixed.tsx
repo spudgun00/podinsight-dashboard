@@ -3,7 +3,8 @@
 import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, Loader2, Lightbulb, PlayCircle, Hash, X, Sparkles, ExternalLink, Clock, Pause } from "lucide-react"
+import { Search, Loader2, Lightbulb, PlayCircle, Hash, X, Sparkles, ExternalLink, Clock, Pause, AlertCircle } from "lucide-react"
+import { searchCache } from "@/lib/search-cache"
 
 interface SearchCommandBarProps {
   onSearch?: (query: string) => void
@@ -113,6 +114,28 @@ function transformApiResponse(response: ApiResponse, query: string): AIAnswer | 
   }
 }
 
+// API call function - moved outside component
+async function performSearchApi(searchQuery: string, signal: AbortSignal) {
+  // Use local proxy to avoid CORS issues
+  const response = await fetch('/api/search', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 
+      query: searchQuery, 
+      limit: 10 // Request 10 chunks for synthesis
+    }),
+    signal, // Pass the signal to fetch
+  })
+
+  if (!response.ok) {
+    throw new Error(`Search failed: ${response.status} ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
 export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: SearchCommandBarProps) {
   const [isMac, setIsMac] = useState(true)
   const [query, setQuery] = useState("")
@@ -140,7 +163,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
   const shouldShowResults = query.length >= 4 && (isFocused || isLoading || results.length > 0 || aiAnswer || error)
 
   useEffect(() => {
-    setIsMac(typeof navigator !== "undefined" && navigator.platform.toUpperCase().indexOf("MAC") >= 0)
+    setIsMac(typeof navigator !== "undefined" && navigator.userAgent.toUpperCase().indexOf("MAC") >= 0)
   }, [])
 
   useEffect(() => {
@@ -157,28 +180,6 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
     }
   }, [])
 
-  // API call function
-  const performSearchApi = async (searchQuery: string, signal: AbortSignal) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://podinsight-api.vercel.app';
-    const response = await fetch(`${apiUrl}/api/search`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        query: searchQuery, 
-        limit: 10 // Request 10 chunks for synthesis
-      }),
-      signal, // Pass the signal to fetch
-    })
-
-    if (!response.ok) {
-      throw new Error(`Search failed: ${response.status} ${response.statusText}`)
-    }
-
-    return response.json()
-  }
-
   // Debounced search function
   const performSearch = useCallback(async (searchQuery: string) => {
     if (searchTimeoutRef.current) {
@@ -193,6 +194,17 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
     abortControllerRef.current = controller
 
     if (searchQuery.length >= 4) {
+      // Check cache first
+      const cachedResponse = searchCache.get(searchQuery, 10, 0)
+      if (cachedResponse) {
+        const transformedAnswer = transformApiResponse(cachedResponse, searchQuery)
+        if (transformedAnswer) {
+          setAiAnswer(transformedAnswer)
+          setError(null)
+          return
+        }
+      }
+
       setIsLoading(true)
       setError(null)
       setAiAnswer(null)
@@ -215,6 +227,11 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
             setError(null)
           }
 
+          // Cache successful responses
+          if (response && response.search_method !== "none_all_failed") {
+            searchCache.set(searchQuery, 10, 0, response)
+          }
+
           // Transform the response
           const transformedAnswer = transformApiResponse(response, searchQuery)
           
@@ -228,9 +245,16 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
             setAiAnswer(transformedAnswer)
           } else if (response.results && response.results.length > 0) {
             // Fallback to raw results if no synthesis available
-            setError("AI synthesis unavailable. Showing search results.")
-            // Transform raw results to SearchResult format if needed
-            // For now, we'll just show a message
+            setError("AI synthesis timed out. Showing search results without summary.")
+            // Transform raw results to display
+            const fallbackResults = response.results.slice(0, 5).map((result: any) => ({
+              id: result.episode_id,
+              title: result.episode_title,
+              type: "episode" as const,
+              description: result.excerpt,
+              podcast: result.podcast_name
+            }))
+            setResults(fallbackResults)
           } else {
             setError("No results found. Try a different query.")
           }
@@ -242,7 +266,15 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
           if (coldStartTimeoutRef.current) {
             clearTimeout(coldStartTimeoutRef.current)
           }
-          setError(err instanceof Error ? err.message : 'An error occurred while searching.')
+          
+          // More user-friendly error messages
+          if (err instanceof Error && err.message.includes('504')) {
+            setError("The search took too long. Try a simpler query or try again later.")
+          } else if (err instanceof Error && err.message.includes('Failed to fetch')) {
+            setError("Network error. Please check your connection and try again.")
+          } else {
+            setError(err instanceof Error ? err.message : 'An error occurred while searching.')
+          }
         } finally {
           setIsLoading(false)
         }
@@ -253,7 +285,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
       setAiAnswer(null)
       setError(null)
     }
-  }, [])
+  }, [isLoading])
 
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,6 +350,23 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
 
   // Audio handling functions
   const handlePlayAudio = async (source: AIAnswer['sources'][0]) => {
+    console.log('[Audio Debug] handlePlayAudio called with source:', {
+      id: source.id,
+      episode_id: source.episode_id,
+      start_seconds: source.start_seconds,
+      title: source.title
+    })
+
+    // Validate source data
+    if (!source.episode_id || typeof source.start_seconds !== 'number' || isNaN(source.start_seconds)) {
+      console.error('[Audio Error] Invalid source data:', source)
+      setAudioStates(prev => ({ 
+        ...prev, 
+        [source.id]: { isLoading: false, url: null, error: 'Invalid audio data' } 
+      }))
+      return
+    }
+
     // If another clip is playing, stop it
     if (playingSourceId && playingSourceId !== source.id) {
       audioRef.current?.pause()
@@ -334,8 +383,15 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
 
     // Check if we already have the URL (e.g., from prefetching)
     if (audioStates[source.id]?.url) {
+      console.log('[Audio Debug] Using cached URL:', audioStates[source.id].url)
       audioRef.current!.src = audioStates[source.id]!.url!
-      audioRef.current?.play()
+      try {
+        await audioRef.current?.play()
+        console.log('[Audio Debug] Playback started successfully')
+      } catch (playError) {
+        console.error('[Audio Error] Failed to play cached audio:', playError)
+        setPlayingSourceId(null)
+      }
       return
     }
 
@@ -343,22 +399,51 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
     setAudioStates(prev => ({ ...prev, [source.id]: { isLoading: true, url: null, error: null } }))
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://podinsight-api.vercel.app';
       const startTimeMs = Math.round(source.start_seconds * 1000)
-      const res = await fetch(`${apiUrl}/api/v1/audio_clips/${source.episode_id}?start_time_ms=${startTimeMs}`)
+      const url = `/api/v1/audio_clips/${source.episode_id}?start_time_ms=${startTimeMs}`
+      console.log('[Audio Debug] Fetching audio from:', url)
+      
+      const res = await fetch(url)
+      console.log('[Audio Debug] Response status:', res.status)
 
       if (!res.ok) {
-        throw new Error('Failed to load audio clip.')
+        const errorBody = await res.text()
+        console.error(`[Audio Error] HTTP ${res.status}:`, errorBody)
+        throw new Error(`Failed to load audio clip: ${res.status}`)
       }
 
       const data = await res.json()
+      console.log('[Audio Debug] API response:', data)
+
+      if (!data || !data.clip_url) {
+        console.error('[Audio Error] Missing clip_url in response:', data)
+        throw new Error('No audio URL in response')
+      }
+
       setAudioStates(prev => ({ ...prev, [source.id]: { isLoading: false, url: data.clip_url, error: null } }))
       
+      console.log('[Audio Debug] Setting audio src to:', data.clip_url)
       audioRef.current!.src = data.clip_url
-      audioRef.current?.play()
+      
+      try {
+        await audioRef.current?.play()
+        console.log('[Audio Debug] Playback started successfully')
+      } catch (playError) {
+        console.error('[Audio Error] Failed to play audio:', playError)
+        setPlayingSourceId(null)
+        throw playError
+      }
     } catch (error) {
-      setAudioStates(prev => ({ ...prev, [source.id]: { isLoading: false, url: null, error: 'Audio failed to load.' } }))
-      setPlayingSourceId(null) // Stop "playing" state on error
+      console.error('[Audio Error] Complete error:', error)
+      setAudioStates(prev => ({ 
+        ...prev, 
+        [source.id]: { 
+          isLoading: false, 
+          url: null, 
+          error: error instanceof Error ? error.message : 'Audio failed to load.' 
+        } 
+      }))
+      setPlayingSourceId(null)
     }
   }
 
@@ -370,9 +455,8 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
     // Set loading state to prevent multiple prefetches
     setAudioStates(prev => ({ ...prev, [source.id]: { isLoading: true, url: null, error: null } }));
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://podinsight-api.vercel.app';
       const startTimeMs = Math.round(source.start_seconds * 1000);
-      const res = await fetch(`${apiUrl}/api/v1/audio_clips/${source.episode_id}?start_time_ms=${startTimeMs}`);
+      const res = await fetch(`/api/v1/audio_clips/${source.episode_id}?start_time_ms=${startTimeMs}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       setAudioStates(prev => ({ ...prev, [source.id]: { isLoading: false, url: data.clip_url, error: null } }));
@@ -478,15 +562,15 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
     }
   }
 
-  const CommandBarContent = ({ isModal = false }: { isModal?: boolean }) => (
+  const CommandBarContent = (
     <div className="relative" ref={containerRef}>
       {/* Search Input */}
       <div
         className={`relative bg-gray-900 transition-all duration-300 ${
-          shouldShowResults && !isModal ? "rounded-t-xl" : "rounded-xl"
+          shouldShowResults && mode === "inline" ? "rounded-t-xl" : "rounded-xl"
         } ${
           isFocused ? "border-gradient-enhanced shadow-focus-glow" : "border-gradient-subtle"
-        } ${isModal ? "shadow-2xl" : ""}`}
+        } ${mode === "modal" ? "shadow-2xl" : ""}`}
         style={{
           height: "56px",
           background:
@@ -542,7 +626,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
             animate={{
               opacity: 1,
               y: 0,
-              maxHeight: isModal ? 500 : 400,
+              maxHeight: mode === "modal" ? 500 : 400,
             }}
             exit={{ opacity: 0, y: -10, maxHeight: 0 }}
             transition={{
@@ -551,20 +635,20 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
               maxHeight: { duration: 0.5, ease: "easeInOut" },
             }}
             className={`${
-              isModal ? "relative" : "absolute top-full left-0 right-0"
+              mode === "modal" ? "relative" : "absolute top-full left-0 right-0"
             } bg-gray-900 border border-white/10 ${
-              isModal ? "rounded-b-xl border-t-0" : "rounded-b-xl"
+              mode === "modal" ? "rounded-b-xl border-t-0" : "rounded-b-xl"
             } shadow-2xl z-50 overflow-hidden`}
             style={{
               background:
                 "linear-gradient(135deg, rgb(17, 24, 39), rgb(17, 24, 39)) padding-box, linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1)) border-box",
               border: "1px solid transparent",
-              borderTop: isModal ? "1px solid rgba(255,255,255,0.05)" : "none",
+              borderTop: mode === "modal" ? "1px solid rgba(255,255,255,0.05)" : "none",
               boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05)",
             }}
             onMouseDown={(e) => e.preventDefault()}
           >
-            <div className={`${isModal ? "max-h-[500px]" : "max-h-[400px]"} overflow-y-auto`}>
+            <div className={`${mode === "modal" ? "max-h-[500px]" : "max-h-[400px]"} overflow-y-auto`}>
               {isLoading ? (
                 <div className="px-6 py-8 text-center">
                   <motion.div
@@ -649,22 +733,32 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
                             className="flex items-start gap-3 p-3 rounded-lg bg-gray-800/30 hover:bg-gray-800/50 transition-all duration-200 group"
                             onMouseEnter={() => prefetchAudio(source)}
                           >
-                            <button
-                              onClick={() => handlePlayAudio(source)}
-                              className="flex-shrink-0 mt-0.5 w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-700 transition-colors"
-                              aria-label={`Play clip from ${source.title}`}
-                            >
-                              {audioStates[source.id]?.isLoading ? (
-                                <Loader2 size={14} className="text-gray-400 animate-spin" />
-                              ) : playingSourceId === source.id ? (
-                                <Pause size={14} className="text-purple-400" />
-                              ) : (
-                                <PlayCircle size={14} className="text-blue-400 group-hover:text-blue-300" />
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handlePlayAudio(source)}
+                                className="flex-shrink-0 mt-0.5 w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-700 transition-colors"
+                                aria-label={`Play clip from ${source.title}`}
+                                disabled={audioStates[source.id]?.error !== null}
+                              >
+                                {audioStates[source.id]?.isLoading ? (
+                                  <Loader2 size={14} className="text-gray-400 animate-spin" />
+                                ) : audioStates[source.id]?.error ? (
+                                  <AlertCircle size={14} className="text-red-400" />
+                                ) : playingSourceId === source.id ? (
+                                  <Pause size={14} className="text-purple-400" />
+                                ) : (
+                                  <PlayCircle size={14} className="text-blue-400 group-hover:text-blue-300" />
+                                )}
+                              </button>
+                              {audioStates[source.id]?.error && (
+                                <span className="text-xs text-red-400">
+                                  {audioStates[source.id].error}
+                                </span>
                               )}
-                            </button>
+                            </div>
                             <div className="flex-1 min-w-0" onClick={() => {
                               onSearch?.(query)
-                              if (isModal) hideModal()
+                              if (mode === "modal") hideModal()
                             }}>
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-white text-sm font-medium group-hover:text-blue-200 transition-colors truncate">
@@ -712,7 +806,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
                             className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-800/30 cursor-pointer transition-all duration-200 group"
                             onClick={() => {
                               onSearch?.(query)
-                              if (isModal) hideModal()
+                              if (mode === "modal") hideModal()
                             }}
                           >
                             <div className="flex-shrink-0 mt-0.5">{getResultIcon(result.type)}</div>
@@ -749,7 +843,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
     <>
       <audio ref={audioRef} />
       <div className={`my-6 ${className}`}>
-        <CommandBarContent />
+        {CommandBarContent}
       </div>
 
       <AnimatePresence>
@@ -776,7 +870,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
               className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-[calc(100%-48px)] max-w-3xl max-h-[calc(100vh-160px)]"
             >
               <div className="relative">
-                <CommandBarContent isModal />
+                {CommandBarContent}
 
                 <button
                   onClick={hideModal}

@@ -1,32 +1,47 @@
 "use client"
 
-import { SearchCommandBar } from "@/components/dashboard/search-command-bar"
-import { useState } from "react"
+import { SearchCommandBar } from "@/components/dashboard/search-command-bar-fixed"
+import { useState, useEffect } from "react"
 
 export default function TestCommandBarPage() {
   const [lastSearch, setLastSearch] = useState<string>("")
   const [useMockData, setUseMockData] = useState(true)
 
-  // Override fetch to use mock data when enabled
-  if (typeof window !== 'undefined' && useMockData) {
-    const originalFetch = window.fetch
-    // @ts-ignore
-    window.fetch = async (url: string, options?: any) => {
-      if (url === '/api/search' && options?.method === 'POST') {
-        const { mockPerformSearch } = await import('@/lib/mock-api')
-        const body = JSON.parse(options.body)
-        const mockData = await mockPerformSearch(body.query)
+  // Override fetch to use mock data when enabled - properly in useEffect
+  useEffect(() => {
+    if (!useMockData) {
+      return; // Do nothing if not using mock data
+    }
+
+    const originalFetch = window.fetch;
+    
+    const mockFetch = async (url: string, options?: any) => {
+      // Only intercept search API calls when mocking is enabled
+      if (typeof url === 'string' && url.includes('/api/search') && options?.method === 'POST') {
+        const { mockPerformSearch } = await import('@/lib/mock-api');
+        const body = JSON.parse(options.body);
+        const mockData = await mockPerformSearch(body.query);
         
         return {
           ok: true,
           status: 200,
           statusText: 'OK',
           json: async () => mockData
-        } as Response
+        } as Response;
       }
-      return originalFetch(url, options)
-    }
-  }
+      // Let all other requests (including audio) go through normally
+      return originalFetch(url, options);
+    };
+
+    // @ts-ignore
+    window.fetch = mockFetch;
+
+    // Return a cleanup function to restore the original fetch
+    return () => {
+      // @ts-ignore
+      window.fetch = originalFetch;
+    };
+  }, [useMockData]);
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -68,6 +83,7 @@ export default function TestCommandBarPage() {
               <li>- "DePIN infrastructure" (emerging tech)</li>
             </ul>
             <p>• Toggle "Use Mock Data" to test with real API</p>
+            <p className="text-yellow-400 mt-2">⚠️ Note: Disable "Use Mock Data" to test audio playback functionality</p>
           </div>
         </div>
 

@@ -12,17 +12,21 @@ The server will start on port 3000:
 - Local: http://localhost:3000
 - Network: http://0.0.0.0:3000
 
+**Note:** If port 3000 is in use, the server will automatically use port 3001 instead:
+- Local: http://localhost:3001
+- Network: http://0.0.0.0:3001
+
 ### 2. Access the Dashboard
 
 #### Main Dashboard (with integrated Search Command Bar)
-- URL: **http://localhost:3000**
+- URL: **http://localhost:3000** (or http://localhost:3001 if port 3000 is in use)
 - The search bar is now integrated at the top of the dashboard
 - Use keyboard shortcuts:
   - Press `/` to focus the search
   - Press `⌘K` (Mac) or `Ctrl+K` (Windows) to focus the search
 
 #### Test Page (with mock data toggle)
-- URL: **http://localhost:3000/test-command-bar**
+- URL: **http://localhost:3000/test-command-bar** (or http://localhost:3001/test-command-bar)
 - Has a toggle to switch between real API and mock data
 - Useful for testing without API delays
 
@@ -88,6 +92,26 @@ npm run dev
 3. **Check browser console** for errors:
    - Open DevTools: `F12` or right-click → Inspect
    - Look for red error messages
+
+### Known Issues
+
+1. **Search Timeouts**:
+   - **Problem**: Some queries (e.g., "startup funding") timeout after 30 seconds
+   - **Cause**: Backend OpenAI synthesis takes too long with retries
+   - **Solution**: The frontend now caches results (5-min TTL) and shows fallback UI with raw results
+   - **Status**: Awaiting backend fix (see `/docs/sprint3/API_TIMEOUT_INVESTIGATION.md`)
+
+2. **Audio Playback Issues**:
+   - **Problem**: Play buttons may not work or timeout
+   - **Cause**: Backend audio clip generation can be slow
+   - **Solution**: Audio proxy now has 10-second timeout
+   - **Debug**: Check console for `[Audio Debug]` and `[Audio Error]` messages
+   - **Test with**: Search for "AI agents" (known to work)
+
+3. **Cold Start Delays**:
+   - **Problem**: First search can take 15-20 seconds
+   - **Cause**: Backend services need to warm up
+   - **Solution**: UI shows appropriate loading messages after 5 seconds
 
 ## Running in Background
 
