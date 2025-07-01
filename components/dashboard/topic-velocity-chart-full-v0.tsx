@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   LineChart,
   Line,
@@ -17,9 +17,9 @@ import {
 import { fetchTopicVelocity, fetchTopicSignals } from "@/lib/api"
 import { DEFAULT_TOPICS, TOPIC_COLORS } from "@/lib/utils"
 import { cn } from "@/lib/utils"
+import { Download, ImageIcon, FileText, Link } from "lucide-react"
 
 interface TopicVelocityChartProps {
-  selectedTimeRange: "1M" | "3M" | "6M"
   onNotablePerformerChange?: (performer: { topic: string; change: string; arrow: string; positive: boolean; data: any[]; color: string }) => void
 }
 
@@ -161,7 +161,8 @@ const customStyles = `
   }
 `
 
-export function TopicVelocityChartFullV0({ selectedTimeRange, onNotablePerformerChange }: TopicVelocityChartProps) {
+export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelocityChartProps) {
+  const [selectedTimeRange, setSelectedTimeRange] = useState<"1M" | "3M" | "6M">("3M")
   const [isLoading, setIsLoading] = useState(true)
   const [data, setData] = useState<any[]>([])
   const [previousData, setPreviousData] = useState<any[]>([])
@@ -174,6 +175,8 @@ export function TopicVelocityChartFullV0({ selectedTimeRange, onNotablePerformer
   const [currentInsightIndex, setCurrentInsightIndex] = useState(0)
   const [animationsComplete, setAnimationsComplete] = useState(false)
   const [insights, setInsights] = useState<string[]>([])
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
+  const exportDropdownRef = useRef<HTMLDivElement>(null)
   const [statistics, setStatistics] = useState({
     totalMentions: 0,
     avgWeeklyGrowth: 0,
@@ -196,6 +199,39 @@ export function TopicVelocityChartFullV0({ selectedTimeRange, onNotablePerformer
       setAnimationsComplete(true)
     }, 2000) // Wait for animations to complete
     return () => clearTimeout(timer)
+  }, [])
+
+  // Handle export actions
+  const handleExport = (type: "png" | "csv" | "link") => {
+    setShowExportDropdown(false)
+    switch (type) {
+      case "png":
+        console.log("Exporting chart as PNG...")
+        // TODO: Implement PNG export
+        break
+      case "csv":
+        console.log("Exporting chart as CSV...")
+        // TODO: Implement CSV export
+        break
+      case "link":
+        navigator.clipboard.writeText(window.location.href)
+        console.log("Chart link copied to clipboard")
+        break
+    }
+  }
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
+        setShowExportDropdown(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
   }, [])
 
   useEffect(() => {
@@ -559,17 +595,79 @@ export function TopicVelocityChartFullV0({ selectedTimeRange, onNotablePerformer
             : "0 25px 50px -12px rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.05)",
         }}
       >
-        {/* Compare periods button - positioned in top-right corner */}
-        <button
-          onClick={() => setShowComparison(!showComparison)}
-          className={cn(
-            "absolute top-4 right-4 text-3xl transition-all duration-200 hover:text-gray-200 active:scale-95 z-20 p-2 rounded-lg",
-            showComparison ? "text-blue-400 bg-blue-500/20 hover:bg-blue-500/30" : "text-gray-400 hover:bg-gray-700/50"
-          )}
-          title={showComparison ? "Hide comparison" : "Compare to previous period"}
-        >
-          ⟳
-        </button>
+        {/* Control buttons - positioned in top-right corner */}
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+          {/* Time Range Selector */}
+          <div className="flex items-center border border-gray-600 rounded-lg overflow-hidden">
+            {(["1M", "3M", "6M"] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setSelectedTimeRange(range)}
+                className={`text-xs px-2 py-1 transition-all duration-200 active:scale-95 ${
+                  selectedTimeRange === range
+                    ? "bg-gray-700 text-white"
+                    : "bg-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+                }`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+
+          {/* Export Button */}
+          <div className="relative" ref={exportDropdownRef}>
+            <button
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+              className="text-xs px-2 py-1 text-gray-400 hover:text-gray-300 hover:bg-gray-800 rounded-lg border border-gray-600 transition-all duration-200 backdrop-blur-sm flex items-center justify-center active:scale-95"
+              title="Export chart"
+            >
+              <Download size={14} />
+            </button>
+
+            {/* Export Dropdown */}
+            {showExportDropdown && (
+              <div className="absolute top-full right-0 mt-2 w-48 bg-black/80 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl shadow-purple-500/20 ring-1 ring-white/5 z-50">
+                <div className="p-2">
+                  <button
+                    onClick={() => handleExport("png")}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-md transition-all duration-200"
+                  >
+                    <ImageIcon size={16} />
+                    Export as PNG
+                  </button>
+                  <button
+                    onClick={() => handleExport("csv")}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-md transition-all duration-200"
+                  >
+                    <FileText size={16} />
+                    Export as CSV
+                  </button>
+                  <button
+                    onClick={() => handleExport("link")}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-md transition-all duration-200"
+                  >
+                    <Link size={16} />
+                    Copy Chart Link
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Compare periods button */}
+          <button
+            onClick={() => setShowComparison(!showComparison)}
+            className={cn(
+              "text-xs px-3 py-1.5 transition-all duration-200 hover:text-gray-200 active:scale-95 rounded-lg border",
+              showComparison 
+                ? "text-blue-400 bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/50" 
+                : "text-gray-400 hover:bg-gray-700/50 border-gray-600"
+            )}
+            title={showComparison ? "Hide comparison" : "Compare to previous period"}
+          >
+            ⟳ {showComparison ? "Hide" : "Show"} Quarterly
+          </button>
+        </div>
 
         {/* Floating background orbs - much more subtle */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
