@@ -164,6 +164,7 @@ const customStyles = `
 export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelocityChartProps) {
   const [selectedTimeRange, setSelectedTimeRange] = useState<"1M" | "3M" | "6M">("3M")
   const [isLoading, setIsLoading] = useState(true)
+  const [allData, setAllData] = useState<{ [key: string]: any[] }>({})
   const [data, setData] = useState<any[]>([])
   const [previousData, setPreviousData] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -234,149 +235,192 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
     }
   }, [])
 
+  // Helper function to calculate statistics
+  const calculateStats = (chartData: any[]) => {
+    let totalMentions = 0
+    let growthRates: number[] = []
+    let maxWeek = { week: "", count: 0 }
+    let topicTotals: { [key: string]: number } = {}
+    
+    DEFAULT_TOPICS.forEach(topic => {
+      topicTotals[topic] = 0
+      if (chartData.length > 1) {
+        for (let i = 1; i < chartData.length; i++) {
+          const prev = chartData[i - 1][topic] || 0
+          const curr = chartData[i][topic] || 0
+          if (prev > 0) {
+            growthRates.push(((curr - prev) / prev) * 100)
+          }
+        }
+      }
+    })
+    
+    chartData.forEach((weekData) => {
+      let weekTotal = 0
+      DEFAULT_TOPICS.forEach(topic => {
+        const count = weekData[topic] || 0
+        totalMentions += count
+        weekTotal += count
+        topicTotals[topic] += count
+      })
+      if (weekTotal > maxWeek.count) {
+        maxWeek = { week: weekData.week, count: weekTotal }
+      }
+    })
+    
+    const avgWeeklyGrowth = growthRates.length > 0 
+      ? growthRates.reduce((a, b) => a + b, 0) / growthRates.length 
+      : 0
+      
+    const trendingTopic = Object.entries(topicTotals)
+      .sort(([, a], [, b]) => b - a)[0]?.[0] || ""
+      
+    return {
+      totalMentions,
+      avgWeeklyGrowth,
+      mostActiveWeek: maxWeek.week,
+      trendingTopic,
+    }
+  }
+  
+  // Helper function to calculate trends
+  const calculateTrends = (chartData: any[]) => {
+    return DEFAULT_TOPICS.map(topic => {
+      if (chartData.length < 2) return { topic, change: 0, arrow: "→", positive: false }
+      
+      const latest = chartData[chartData.length - 1][topic] || 0
+      const previous = chartData[chartData.length - 2][topic] || 0
+      const change = previous === 0 ? 0 : ((latest - previous) / previous * 100)
+      const arrow = change > 0 ? "↑" : change < 0 ? "↓" : "→"
+      
+      return { topic, change: Math.abs(change).toFixed(0), arrow, positive: change > 0 }
+    })
+  }
+
+  // Function to process API response
+  const processApiResponse = (response: any) => {
+    // Transform API response to chart format
+    const chartData: any[] = []
+    
+    // Get all unique weeks from the data
+    const weekSet = new Set<string>()
+    Object.values(response.data).forEach((topicData: any) => {
+      topicData.forEach((item: any) => weekSet.add(item.week))
+    })
+    
+    // Sort weeks
+    const sortedWeeks = Array.from(weekSet).sort()
+    
+    // Build chart data with all topics for each week
+    sortedWeeks.forEach(week => {
+      const weekData: any = { 
+        week: week.replace("2025-", ""), // Simplify week display
+        fullWeek: week
+      }
+      
+      DEFAULT_TOPICS.forEach(topic => {
+        const topicWeekData = response.data[topic]?.find((item: any) => item.week === week)
+        weekData[topic] = topicWeekData?.mentions || 0
+      })
+      
+      chartData.push(weekData)
+    })
+    
+    return chartData
+  }
+
+  // Preload all data on mount
   useEffect(() => {
-    async function loadData() {
+    async function preloadAllData() {
       try {
         setIsLoading(true)
         setError(null)
         
-        // Convert time range to weeks
-        const weeks = selectedTimeRange === "1M" ? 4 : selectedTimeRange === "3M" ? 12 : 24
+        // Fetch data for all time ranges in parallel
+        const [data1M, data3M, data6M] = await Promise.all([
+          fetchTopicVelocity(4, DEFAULT_TOPICS),
+          fetchTopicVelocity(12, DEFAULT_TOPICS),
+          fetchTopicVelocity(24, DEFAULT_TOPICS)
+        ])
         
-        // Fetch data from API
-        const response = await fetchTopicVelocity(weeks, DEFAULT_TOPICS)
-        
-        // Transform API response to chart format
-        const chartData: any[] = []
-        
-        // Get all unique weeks from the data
-        const weekSet = new Set<string>()
-        Object.values(response.data).forEach(topicData => {
-          topicData.forEach(item => weekSet.add(item.week))
-        })
-        
-        // Sort weeks
-        const sortedWeeks = Array.from(weekSet).sort()
-        
-        // Build chart data with all topics for each week
-        sortedWeeks.forEach(week => {
-          const weekData: any = { 
-            week: week.replace("2025-", ""), // Simplify week display
-            fullWeek: week
-          }
-          
-          DEFAULT_TOPICS.forEach(topic => {
-            const topicWeekData = response.data[topic]?.find(item => item.week === week)
-            weekData[topic] = topicWeekData?.mentions || 0
-          })
-          
-          chartData.push(weekData)
-        })
-        
-        // Calculate statistics
-        let totalMentions = 0
-        let growthRates: number[] = []
-        let maxWeek = { week: "", count: 0 }
-        let topicTotals: { [key: string]: number } = {}
-
-        DEFAULT_TOPICS.forEach(topic => {
-          topicTotals[topic] = 0
-          if (chartData.length > 1) {
-            for (let i = 1; i < chartData.length; i++) {
-              const prev = chartData[i - 1][topic] || 0
-              const curr = chartData[i][topic] || 0
-              if (prev > 0) {
-                growthRates.push(((curr - prev) / prev) * 100)
-              }
-            }
-          }
-        })
-
-        chartData.forEach((weekData) => {
-          let weekTotal = 0
-          DEFAULT_TOPICS.forEach(topic => {
-            const count = weekData[topic] || 0
-            totalMentions += count
-            weekTotal += count
-            topicTotals[topic] += count
-          })
-          if (weekTotal > maxWeek.count) {
-            maxWeek = { week: weekData.week, count: weekTotal }
-          }
-        })
-
-        const avgWeeklyGrowth = growthRates.length > 0 
-          ? growthRates.reduce((a, b) => a + b, 0) / growthRates.length 
-          : 0
-
-        const trendingTopic = Object.entries(topicTotals)
-          .sort(([, a], [, b]) => b - a)[0]?.[0] || ""
-
-        setStatistics({
-          totalMentions,
-          avgWeeklyGrowth,
-          mostActiveWeek: maxWeek.week,
-          trendingTopic,
-        })
-        
-        // Calculate latest trends for insights
-        const trends = DEFAULT_TOPICS.map(topic => {
-          if (chartData.length < 2) return { topic, change: 0, arrow: "→", positive: false }
-          
-          const latest = chartData[chartData.length - 1][topic] || 0
-          const previous = chartData[chartData.length - 2][topic] || 0
-          const change = previous === 0 ? 0 : ((latest - previous) / previous * 100)
-          const arrow = change > 0 ? "↑" : change < 0 ? "↓" : "→"
-          
-          return { topic, change: Math.abs(change).toFixed(0), arrow, positive: change > 0 }
-        })
-        
-        // Generate insights from real data
-        const generatedInsights = generateInsights(chartData, trends, {
-          totalMentions,
-          avgWeeklyGrowth,
-          mostActiveWeek: maxWeek.week,
-          trendingTopic,
-        })
-        // Fetch real signals from API
-        try {
-          const signalsResponse = await fetchTopicSignals()
-          if (signalsResponse.signal_messages && signalsResponse.signal_messages.length > 0) {
-            // Use real signal messages if available
-            setInsights(signalsResponse.signal_messages)
-          } else {
-            // Fall back to generated insights
-            setInsights(generatedInsights)
-          }
-        } catch (signalError) {
-          console.warn("Failed to fetch signals, using generated insights:", signalError)
-          setInsights(generatedInsights)
+        // Process and store all data
+        const processedData = {
+          "1M": processApiResponse(data1M),
+          "3M": processApiResponse(data3M),
+          "6M": processApiResponse(data6M)
         }
         
-        // Generate previous quarter data for comparison
-        const prevQuarterData = chartData.map((week, index) => {
+        setAllData(processedData)
+        setData(processedData[selectedTimeRange])
+        
+        // Calculate initial statistics
+        const stats = calculateStats(processedData[selectedTimeRange])
+        setStatistics(stats)
+        
+        // Generate initial previous quarter data
+        const prevQuarterData = processedData[selectedTimeRange].map((week: any) => {
           const prevData: any = { week: week.week, fullWeek: week.fullWeek }
           DEFAULT_TOPICS.forEach(topic => {
-            // Simulate previous quarter with some variance
             const currentValue = week[topic] || 0
-            const variance = 0.7 + Math.random() * 0.6 // 70% to 130% of current
+            const variance = 0.7 + Math.random() * 0.6
             prevData[topic] = Math.round(currentValue * variance)
           })
           return prevData
         })
         setPreviousData(prevQuarterData)
         
-        setData(chartData)
+        // Fetch insights
+        try {
+          const signalsResponse = await fetchTopicSignals()
+          if (signalsResponse.signal_messages && signalsResponse.signal_messages.length > 0) {
+            setInsights(signalsResponse.signal_messages)
+          } else {
+            const trends = calculateTrends(processedData["6M"])
+            const stats6M = calculateStats(processedData["6M"])
+            setInsights(generateInsights(processedData["6M"], trends, stats6M))
+          }
+        } catch (err) {
+          console.warn("Failed to fetch signals:", err)
+          const trends = calculateTrends(processedData["6M"])
+          const stats6M = calculateStats(processedData["6M"])
+          setInsights(generateInsights(processedData["6M"], trends, stats6M))
+        }
+        
+        setIsLoading(false)
       } catch (err) {
-        console.error("Failed to fetch topic data:", err)
+        console.error("Failed to preload data:", err)
         setError(err instanceof Error ? err.message : "Failed to load data")
-      } finally {
         setIsLoading(false)
       }
     }
+    
+    preloadAllData()
+  }, []) // Only run once on mount
 
-    loadData()
-  }, [selectedTimeRange])
+  // Update displayed data when time range changes
+  useEffect(() => {
+    if (allData[selectedTimeRange]) {
+      setData(allData[selectedTimeRange])
+      
+      // Recalculate statistics for the selected time range
+      const chartData = allData[selectedTimeRange]
+      const stats = calculateStats(chartData)
+      setStatistics(stats)
+      
+      // Generate previous quarter data for comparison
+      const prevQuarterData = chartData.map((week: any) => {
+        const prevData: any = { week: week.week, fullWeek: week.fullWeek }
+        DEFAULT_TOPICS.forEach(topic => {
+          // Simulate previous quarter with some variance
+          const currentValue = week[topic] || 0
+          const variance = 0.7 + Math.random() * 0.6 // 70% to 130% of current
+          prevData[topic] = Math.round(currentValue * variance)
+        })
+        return prevData
+      })
+      setPreviousData(prevQuarterData)
+    }
+  }, [selectedTimeRange, allData])
 
   const handleLegendClick = (data: any) => {
     const topicName = data.value
