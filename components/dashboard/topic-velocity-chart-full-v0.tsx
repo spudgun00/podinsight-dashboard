@@ -558,16 +558,16 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
             <p className="text-xs text-gray-400">Notable Performer</p>
             <div className="flex items-baseline gap-1">
               <div className="flex items-baseline gap-1">
-                <p className="text-lg font-semibold" style={{ color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] }}>
+                <p className="text-sm font-semibold" style={{ color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] }}>
                   {notablePerformer.topic}
                 </p>
                 <p className={cn(
-                  "text-2xl font-bold",
+                  "text-sm font-bold",
                   notablePerformer.positive ? "text-green-400" : "text-red-400"
                 )}>
                   {notablePerformer.arrow}{notablePerformer.change}%
                 </p>
-                <p className="text-sm font-medium text-white/60">({selectedTimeRange})</p>
+                <p className="text-xs font-medium text-white/60">({selectedTimeRange})</p>
               </div>
               {velocityBadge && (
                 <span className={cn(
