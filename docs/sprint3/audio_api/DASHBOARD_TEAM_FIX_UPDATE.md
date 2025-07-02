@@ -160,4 +160,36 @@ Please test again once Vercel deployment completes (~6 minutes from now).
 
 ---
 
+## Additional UI Improvements (July 2, 2025 - 10:45 AM BST)
+
+### 4. Removed Intrusive Quarterly Comparison Banner
+**Problem**: Blue banner showing "Comparing NaN Q3 with Q2" pushed chart down  
+**Root Cause**: Banner was positioned above chart and had date parsing issue
+**Fix**: Removed the banner entirely for cleaner UI
+
+### 5. Fixed Chart Height Inconsistency Between Views
+**Problem**: Chart shrank vertically when switching from Time Range to Quarters view  
+**Root Cause**: 
+- Quarters view had extra bottom margin (40px vs 5px)
+- X-axis labels were rotated 45° requiring extra height (60px vs 30px)
+
+**Fix**:
+- Unified margin settings: `bottom: 5` for both views
+- Kept x-axis labels horizontal in both views
+- Removed all conditional height/angle settings
+- Chart now maintains exact same size in both views
+
+## Final Technical Changes
+
+1. **Removed quarterly comparison banner** (lines 1009-1038)
+2. **Unified XAxis configuration** (lines 1184-1188):
+   - `angle`: Always 0 (horizontal labels)
+   - `height`: Always 30px
+   - `fontSize`: Always 12
+   - `textAnchor`: Always 'middle'
+3. **Unified margin configuration** (line 1150):
+   - `bottom`: Always 5px (removed conditional 40px)
+
+---
+
 All fixes have been implemented and tested successfully.

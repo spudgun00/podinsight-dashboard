@@ -1006,37 +1006,6 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         </div>
       </div>
 
-      {/* Quarterly View Indicator */}
-      {viewMode === "quarters" && displayData.length > 0 && (
-        <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-2 rounded-lg mb-4 flex items-center gap-2 text-sm">
-          <span className="text-blue-400">📊 Quarterly Comparison:</span>
-          <span className="text-gray-300">
-            {(() => {
-              // Get the actual year from the data being displayed
-              const dataYear = displayData[0]?.date 
-                ? new Date(displayData[0].date).getFullYear()
-                : displayData[0]?.fullWeek
-                ? new Date(displayData[0].fullWeek).getFullYear()
-                : new Date().getFullYear()
-                
-              if (selectedQuarter === "Q1") {
-                return `Showing ${dataYear} Q1 only`
-              } else {
-                const quarterNum = parseInt(selectedQuarter.substring(1))
-                const prevQuarter = `Q${quarterNum - 1}`
-                const isIncomplete = displayData.length < 13 // Less than full quarter
-                
-                if (isIncomplete) {
-                  return `Comparing first ${displayData.length} weeks of ${dataYear} ${selectedQuarter} with ${prevQuarter}`
-                } else {
-                  return `Comparing ${dataYear} ${selectedQuarter} with ${prevQuarter}`
-                }
-              }
-            })()}
-          </span>
-        </div>
-      )}
-
       <div
         className={cn(
           "bg-black/30 backdrop-blur-2xl border rounded-xl shadow-2xl shadow-purple-500/20 ring-1 ring-white/10 p-4 md:p-6 relative overflow-hidden group transition-all duration-300",
@@ -1178,7 +1147,7 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         <ResponsiveContainer width="100%" height={400}>
           <LineChart
             data={displayData}
-            margin={{ top: 5, right: 30, left: 20, bottom: viewMode === "quarters" ? 40 : 5 }}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             onMouseMove={(e) => {
               if (e && e.activeLabel !== undefined && e.activeCoordinate) {
                 setMouseCoords({
@@ -1212,11 +1181,11 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
             <XAxis 
               dataKey="week" 
               stroke="rgba(255,255,255,0.5)"
-              tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: viewMode === "quarters" ? 11 : 12 }}
-              angle={viewMode === "quarters" ? -45 : 0}
-              textAnchor={viewMode === "quarters" ? 'end' : 'middle'}
-              interval={viewMode === "quarters" ? 'preserveStartEnd' : 'preserveStartEnd'}
-              height={viewMode === "quarters" ? 60 : 30}
+              tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+              angle={0}
+              textAnchor={'middle'}
+              interval={'preserveStartEnd'}
+              height={30}
             />
             <YAxis 
               stroke="rgba(255,255,255,0.5)"
