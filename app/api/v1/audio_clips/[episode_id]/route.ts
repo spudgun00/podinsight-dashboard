@@ -19,9 +19,6 @@ export async function GET(
       )
     }
 
-    // Log the received episode_id for debugging
-    console.log('[Audio Proxy] Received episode_id:', params.episode_id)
-    
     // Check if it's a valid GUID or ObjectId format
     const isValidGuid = guidRegex.test(params.episode_id)
     const isObjectId = /^[0-9a-fA-F]{24}$/.test(params.episode_id)
@@ -30,14 +27,6 @@ export async function GET(
     
     // API now accepts GUID, ObjectId, Substack, and Flightcast formats
     if (!isValidGuid && !isObjectId && !isSubstack && !isFlightcast) {
-      console.error('[Audio Proxy] Invalid episode_id format:', {
-        received: params.episode_id,
-        is_objectid: isObjectId,
-        is_guid: isValidGuid,
-        is_substack: isSubstack,
-        is_flightcast: isFlightcast,
-        expected: 'GUID (8-4-4-4-12), ObjectId (24 hex chars), substack:post:NUMBER, or flightcast:episode:GUID'
-      })
       return NextResponse.json(
         { 
           error: 'Invalid episode_id format.',
@@ -57,8 +46,6 @@ export async function GET(
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://podinsight-api.vercel.app'
     const fullUrl = `${apiUrl}/api/v1/audio_clips/${params.episode_id}?start_time_ms=${startTimeMs}&duration_ms=${durationMs}`
     
-    console.log('[Audio Proxy] Requesting:', fullUrl)
-    
     // Add AbortController for timeout
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
@@ -72,13 +59,11 @@ export async function GET(
         let errorMessage = `API responded with status: ${response.status}`
         try {
           const errorData = await response.json()
-          console.error('Audio API error response:', errorData)
           errorMessage = errorData.error || errorMessage
         } catch (e) {
           // If response isn't JSON, try text
           try {
             const errorText = await response.text()
-            console.error('Audio API error text:', errorText)
             errorMessage = errorText || errorMessage
           } catch (e2) {
             // Use default error message

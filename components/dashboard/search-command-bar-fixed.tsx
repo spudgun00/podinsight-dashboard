@@ -350,16 +350,8 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
 
   // Audio handling functions
   const handlePlayAudio = async (source: AIAnswer['sources'][0]) => {
-    console.log('[Audio Debug] handlePlayAudio called with source:', {
-      id: source.id,
-      episode_id: source.episode_id,
-      start_seconds: source.start_seconds,
-      title: source.title
-    })
-
     // Validate source data
     if (!source.episode_id || typeof source.start_seconds !== 'number' || isNaN(source.start_seconds)) {
-      console.error('[Audio Error] Invalid source data:', source)
       setAudioStates(prev => ({ 
         ...prev, 
         [source.id]: { isLoading: false, url: null, error: 'Invalid audio data' } 
@@ -383,13 +375,10 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
 
     // Check if we already have the URL (e.g., from prefetching)
     if (audioStates[source.id]?.url) {
-      console.log('[Audio Debug] Using cached URL:', audioStates[source.id].url)
       audioRef.current!.src = audioStates[source.id]!.url!
       try {
         await audioRef.current?.play()
-        console.log('[Audio Debug] Playback started successfully')
       } catch (playError) {
-        console.error('[Audio Error] Failed to play cached audio:', playError)
         setPlayingSourceId(null)
       }
       return
@@ -401,40 +390,26 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
     try {
       const startTimeMs = Math.round(source.start_seconds * 1000)
       const url = `/api/v1/audio_clips/${source.episode_id}?start_time_ms=${startTimeMs}`
-      console.log('[Audio Debug] Fetching audio from:', url)
-      
       const res = await fetch(url)
-      console.log('[Audio Debug] Response status:', res.status)
-
       if (!res.ok) {
         const errorBody = await res.text()
-        console.error(`[Audio Error] HTTP ${res.status}:`, errorBody)
         throw new Error(`Failed to load audio clip: ${res.status}`)
       }
 
       const data = await res.json()
-      console.log('[Audio Debug] API response:', data)
-
       if (!data || !data.clip_url) {
-        console.error('[Audio Error] Missing clip_url in response:', data)
         throw new Error('No audio URL in response')
       }
 
       setAudioStates(prev => ({ ...prev, [source.id]: { isLoading: false, url: data.clip_url, error: null } }))
-      
-      console.log('[Audio Debug] Setting audio src to:', data.clip_url)
       audioRef.current!.src = data.clip_url
-      
       try {
         await audioRef.current?.play()
-        console.log('[Audio Debug] Playback started successfully')
       } catch (playError) {
-        console.error('[Audio Error] Failed to play audio:', playError)
         setPlayingSourceId(null)
         throw playError
       }
     } catch (error) {
-      console.error('[Audio Error] Complete error:', error)
       setAudioStates(prev => ({ 
         ...prev, 
         [source.id]: { 

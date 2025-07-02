@@ -6,7 +6,7 @@ import { DashboardHeader } from "@/components/dashboard/header"
 import { MetricCard } from "@/components/dashboard/metric-card"
 import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
 import { SentimentHeatmap } from "@/components/dashboard/sentiment-heatmap"
-import { SearchCommandBar } from "@/components/dashboard/search-command-bar"
+import { SearchCommandBar } from "@/components/dashboard/search-command-bar-fixed"
 import { useEffect, useState } from "react"
 import { fetchSentimentAnalysis, type SentimentData } from "@/lib/api"
 
@@ -69,7 +69,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto">
           {/* Search Command Bar */}
           <SearchCommandBar 
-            onSearch={(query) => console.log('Search:', query)}
+            onSearch={(query) => {}}
             mode="inline"
           />
 
@@ -105,7 +105,6 @@ export default function DashboardPage() {
               data={sentimentData}
               isLoading={isLoadingSentiment}
               onCellClick={(topic, week) => {
-                console.log(`Clicked: ${topic} in ${week}`)
                 // Future: Show episode details
               }}
             />

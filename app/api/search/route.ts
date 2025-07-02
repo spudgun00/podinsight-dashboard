@@ -9,7 +9,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { query, limit = 10, offset = 0 } = body
 
-    console.log(`[Search API] Proxying request for query: "${query}"`)
 
     // Call the external PodInsight API with a timeout
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://podinsight-api.vercel.app'
@@ -35,7 +34,6 @@ export async function POST(request: NextRequest) {
       }
 
       const data = await response.json()
-      console.log(`[Search API] Successfully proxied response for: "${query}"`)
       return NextResponse.json(data)
       
     } catch (fetchError: any) {

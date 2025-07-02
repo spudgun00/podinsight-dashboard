@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import {
   LineChart,
   Line,
@@ -162,17 +162,19 @@ const customStyles = `
 `
 
 export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelocityChartProps) {
+  const [viewMode, setViewMode] = useState<"timeRange" | "quarters">("timeRange")
   const [selectedTimeRange, setSelectedTimeRange] = useState<"1M" | "3M" | "6M">("3M")
+  const [selectedQuarter, setSelectedQuarter] = useState<"Q1" | "Q2" | "Q3" | "Q4">("Q2")
   const [isLoading, setIsLoading] = useState(true)
   const [allData, setAllData] = useState<{ [key: string]: any[] }>({})
   const [data, setData] = useState<any[]>([])
+  const [displayData, setDisplayData] = useState<any[]>([])
   const [previousData, setPreviousData] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
   const [hoveredLine, setHoveredLine] = useState<string | null>(null)
   const [hiddenTopics, setHiddenTopics] = useState<string[]>([])
   const [isChartHovered, setIsChartHovered] = useState(false)
   const [mouseCoords, setMouseCoords] = useState<{ x: string | null; y: number | null }>({ x: null, y: null })
-  const [showComparison, setShowComparison] = useState(false)
   const [currentInsightIndex, setCurrentInsightIndex] = useState(0)
   const [animationsComplete, setAnimationsComplete] = useState(false)
   const [insights, setInsights] = useState<string[]>([])
@@ -184,6 +186,11 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
     mostActiveWeek: "",
     trendingTopic: "",
   })
+
+  // Set initial quarter to Q2 (as requested)
+  useEffect(() => {
+    setSelectedQuarter("Q2")
+  }, [])
 
   // Cycle through insights every 10 seconds
   useEffect(() => {
@@ -207,16 +214,13 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
     setShowExportDropdown(false)
     switch (type) {
       case "png":
-        console.log("Exporting chart as PNG...")
         // TODO: Implement PNG export
         break
       case "csv":
-        console.log("Exporting chart as CSV...")
         // TODO: Implement CSV export
         break
       case "link":
         navigator.clipboard.writeText(window.location.href)
-        console.log("Chart link copied to clipboard")
         break
     }
   }
@@ -234,6 +238,244 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
+
+  // Helper function to get week of year
+  const getWeekOfYear = (date: Date): number => {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1)
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7)
+  }
+
+  // Helper function to get current quarter
+  const getCurrentQuarter = (): "Q1" | "Q2" | "Q3" | "Q4" => {
+    const month = new Date().getMonth()
+    if (month < 3) return "Q1"
+    if (month < 6) return "Q2"
+    if (month < 9) return "Q3"
+    return "Q4"
+  }
+
+  // Helper function to parse ISO week string to Date
+  const parseISOWeekToDate = (weekString: string): Date | null => {
+    const [yearStr, weekStr] = weekString.split('-W')
+    if (!yearStr || !weekStr) {
+      return null
+    }
+    
+    const year = parseInt(yearStr, 10)
+    const week = parseInt(weekStr, 10)
+    
+    // ISO 8601 weeks start on Monday. Week 1 is the week containing January 4th.
+    
+    // 1. Start with Jan 4th of the given year in UTC to avoid timezone issues
+    const jan4 = new Date(Date.UTC(year, 0, 4))
+    
+    // 2. Find the Monday of the week containing Jan 4th
+    // getUTCDay() is 0=Sun, 1=Mon...6=Sat
+    // The expression (jan4.getUTCDay() + 6) % 7 calculates days to subtract
+    const mondayOfWeek1 = new Date(jan4.getTime())
+    mondayOfWeek1.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() + 6) % 7))
+    
+    // 3. Add the required number of weeks (minus 1) to get to the target week's Monday
+    const targetDate = new Date(mondayOfWeek1.getTime())
+    targetDate.setUTCDate(mondayOfWeek1.getUTCDate() + (week - 1) * 7)
+    
+    return targetDate
+  }
+
+  // Helper function to get quarter from date
+  const getQuarterFromDate = (date: Date): { quarter: number; year: number } => {
+    const month = date.getMonth()
+    const quarter = Math.floor(month / 3) + 1
+    return { quarter, year: date.getFullYear() }
+  }
+
+  // Helper function to find the latest year with data
+  const findLatestYearWithData = (allWeekData: any[]): number => {
+    
+    const yearsWithData = new Set<number>()
+    
+    allWeekData.forEach(week => {
+      // First check if we have a direct year field
+      if (week.year) {
+        yearsWithData.add(week.year)
+        return
+      }
+      
+      // Check for ISO week format in various fields
+      const weekString = week.fullWeek || week.week || week.date || ''
+      
+      // Extract year from ISO week format (YYYY-Www)
+      if (weekString && typeof weekString === 'string' && weekString.includes('-W')) {
+        const yearMatch = weekString.match(/^(\d{4})-W\d{2}$/)
+        if (yearMatch) {
+          const year = parseInt(yearMatch[1], 10)
+          yearsWithData.add(year)
+        }
+      } else if (weekString) {
+        // Try to parse as regular date
+        const date = new Date(weekString)
+        if (!isNaN(date.getTime())) {
+          yearsWithData.add(date.getFullYear())
+        }
+      }
+    })
+    
+    // Return the most recent year with data
+    const years = Array.from(yearsWithData).sort((a, b) => b - a)
+    const latestYear = years[0] || new Date().getFullYear()
+    return latestYear
+  }
+
+  // Helper function to filter data by quarter
+  const filterDataByQuarter = (allWeekData: any[], quarter: "Q1" | "Q2" | "Q3" | "Q4", year?: number) => {
+    const quarterNum = parseInt(quarter.substring(1))
+    const targetYear = year || findLatestYearWithData(allWeekData)
+    
+    const filtered = allWeekData.filter((week, index) => {
+      
+      // Extract week string from various possible fields
+      const weekString = week.fullWeek || week.week || week.date || ''
+      
+      // For ISO week format, extract year and week directly
+      if (weekString && weekString.includes('-W')) {
+        const match = weekString.match(/^(\d{4})-W(\d{2})$/)
+        if (match) {
+          // Convert ISO week to actual date to determine quarter
+          const weekDate = parseISOWeekToDate(weekString)
+          if (!weekDate) {
+            return false
+          }
+          
+          // Use Thursday of the week to determine quarter (ISO week pivot day)
+          // This ensures weeks that span quarters are assigned correctly
+          const thursday = new Date(weekDate)
+          thursday.setDate(weekDate.getDate() + 3) // Monday + 3 = Thursday
+          
+          // Get the quarter based on Thursday's month
+          const month = thursday.getMonth() // 0-11
+          const weekQuarter = Math.floor(month / 3) + 1 // 1-4
+          const weekYear = thursday.getFullYear()
+          
+          const matches = weekQuarter === quarterNum && weekYear === targetYear
+          
+          return matches
+        }
+      }
+      
+      // Fallback: try to parse as date
+      const weekDate = new Date(weekString)
+      if (!isNaN(weekDate.getTime())) {
+        const { quarter: weekQuarter, year: weekYear } = getQuarterFromDate(weekDate)
+        return weekQuarter === quarterNum && weekYear === targetYear
+      }
+      
+      return false
+    })
+    
+    // Sort the filtered data by week to ensure correct chronological order
+    filtered.sort((a, b) => {
+      const weekA = a.fullWeek || a.week || a.date || ''
+      const weekB = b.fullWeek || b.week || b.date || ''
+      return weekA.localeCompare(weekB, undefined, { numeric: true })
+    })
+    
+    return filtered
+  }
+
+  // Helper function to get previous quarter
+  const getPreviousQuarter = (quarter: "Q1" | "Q2" | "Q3" | "Q4", year: number): { quarter: "Q1" | "Q2" | "Q3" | "Q4"; year: number } => {
+    const quarterNum = parseInt(quarter.substring(1))
+    if (quarterNum === 1) {
+      return { quarter: "Q4", year: year - 1 }
+    }
+    return { quarter: `Q${quarterNum - 1}` as "Q1" | "Q2" | "Q3" | "Q4", year }
+  }
+
+  // Helper function to merge current and previous quarter data into single dataset
+  const mergeQuarterData = (currentData: any[], previousData: any[]): any[] => {
+    // Sort data to ensure correct ordering
+    const sortedCurrent = [...currentData].sort((a, b) => 
+      (a.week || a.fullWeek).localeCompare(b.week || b.fullWeek)
+    )
+    const sortedPrevious = [...previousData].sort((a, b) => 
+      (a.week || a.fullWeek).localeCompare(b.week || b.fullWeek)
+    )
+    
+    // Determine the full week range for the current quarter
+    const currentYear = findLatestYearWithData(allData.year || [])
+    const quarterNum = parseInt(selectedQuarter.substring(1))
+    
+    // Find all weeks that belong to this quarter
+    const expectedWeeks: string[] = []
+    for (let week = 1; week <= 53; week++) {
+      const weekString = `${currentYear}-W${week.toString().padStart(2, '0')}`
+      
+      // Check if this week belongs to the current quarter
+      const weekDate = parseISOWeekToDate(weekString)
+      if (!weekDate) continue
+      
+      // Use Thursday to determine quarter
+      const thursday = new Date(weekDate)
+      thursday.setDate(weekDate.getDate() + 3)
+      
+      const month = thursday.getMonth()
+      const weekQuarter = Math.floor(month / 3) + 1
+      
+      if (weekQuarter === quarterNum) {
+        expectedWeeks.push(weekString)
+      }
+    }
+    
+    
+    // Create merged data for all expected weeks
+    return expectedWeeks.map((weekString, index) => {
+      // Find actual data for this week
+      const currentWeek = sortedCurrent.find(d => (d.week || d.fullWeek) === weekString)
+      
+      // Calculate relative position for previous quarter mapping
+      const relativePosition = expectedWeeks.length > 1 
+        ? index / (expectedWeeks.length - 1) 
+        : 0
+      
+      // Find corresponding week in previous quarter based on relative position
+      const prevIndex = sortedPrevious.length > 1
+        ? Math.round(relativePosition * (sortedPrevious.length - 1))
+        : 0
+      
+      const prevWeek = sortedPrevious[prevIndex]
+      
+      const mergedWeek: any = {
+        week: weekString,
+        fullWeek: weekString
+      }
+      
+      // Add current quarter data if it exists
+      if (currentWeek) {
+        DEFAULT_TOPICS.forEach(topic => {
+          mergedWeek[topic] = currentWeek[topic]
+        })
+      } else {
+        // No data yet - set to null
+        DEFAULT_TOPICS.forEach(topic => {
+          mergedWeek[topic] = null
+        })
+      }
+      
+      // Add previous quarter data with _prev suffix
+      if (prevWeek) {
+        DEFAULT_TOPICS.forEach(topic => {
+          if (prevWeek[topic] !== undefined) {
+            mergedWeek[`${topic}_prev`] = prevWeek[topic]
+          }
+        })
+      }
+      
+      
+      return mergedWeek
+    })
+  }
+
 
   // Helper function to calculate statistics
   const calculateStats = (chartData: any[]) => {
@@ -314,13 +556,17 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
     // Build chart data with all topics for each week
     sortedWeeks.forEach(week => {
       const weekData: any = { 
-        week: week.replace("2025-", ""), // Simplify week display
+        week: week, // Keep full week string for now
         fullWeek: week
       }
       
       DEFAULT_TOPICS.forEach(topic => {
         const topicWeekData = response.data[topic]?.find((item: any) => item.week === week)
         weekData[topic] = topicWeekData?.mentions || 0
+        // Store the date if available
+        if (topicWeekData?.date && !weekData.date) {
+          weekData.date = topicWeekData.date
+        }
       })
       
       chartData.push(weekData)
@@ -336,22 +582,35 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         setIsLoading(true)
         setError(null)
         
-        // Fetch data for all time ranges in parallel
-        const [data1M, data3M, data6M] = await Promise.all([
+        // Fetch data for all time ranges and quarterly data in parallel
+        const [data1M, data3M, data6M, dataYear] = await Promise.all([
           fetchTopicVelocity(4, DEFAULT_TOPICS),
           fetchTopicVelocity(12, DEFAULT_TOPICS),
-          fetchTopicVelocity(24, DEFAULT_TOPICS)
+          fetchTopicVelocity(24, DEFAULT_TOPICS),
+          fetchTopicVelocity(52, DEFAULT_TOPICS) // Full year for quarterly comparisons
         ])
         
         // Process and store all data
-        const processedData = {
+        const processedData: { [key: string]: any[] } = {
           "1M": processApiResponse(data1M),
           "3M": processApiResponse(data3M),
-          "6M": processApiResponse(data6M)
+          "6M": processApiResponse(data6M),
+          "year": processApiResponse(dataYear)
         }
         
+        
         setAllData(processedData)
-        setData(processedData[selectedTimeRange])
+        
+        // Set initial data based on view mode
+        if (viewMode === "quarters") {
+          const currentYear = new Date().getFullYear()
+          const currentQuarterData = filterDataByQuarter(processedData.year, selectedQuarter, currentYear)
+          setData(currentQuarterData)
+          setDisplayData(currentQuarterData)
+        } else {
+          setData(processedData[selectedTimeRange])
+          setDisplayData(processedData[selectedTimeRange])
+        }
         
         // Calculate initial statistics
         const stats = calculateStats(processedData[selectedTimeRange])
@@ -380,7 +639,6 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
             setInsights(generateInsights(processedData["6M"], trends, stats6M))
           }
         } catch (err) {
-          console.warn("Failed to fetch signals:", err)
           const trends = calculateTrends(processedData["6M"])
           const stats6M = calculateStats(processedData["6M"])
           setInsights(generateInsights(processedData["6M"], trends, stats6M))
@@ -388,7 +646,6 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         
         setIsLoading(false)
       } catch (err) {
-        console.error("Failed to preload data:", err)
         setError(err instanceof Error ? err.message : "Failed to load data")
         setIsLoading(false)
       }
@@ -397,30 +654,50 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
     preloadAllData()
   }, []) // Only run once on mount
 
-  // Update displayed data when time range changes
+  
+  // Calculate statistics based on displayed data
   useEffect(() => {
-    if (allData[selectedTimeRange]) {
-      setData(allData[selectedTimeRange])
-      
-      // Recalculate statistics for the selected time range
-      const chartData = allData[selectedTimeRange]
-      const stats = calculateStats(chartData)
-      setStatistics(stats)
-      
-      // Generate previous quarter data for comparison
-      const prevQuarterData = chartData.map((week: any) => {
-        const prevData: any = { week: week.week, fullWeek: week.fullWeek }
-        DEFAULT_TOPICS.forEach(topic => {
-          // Simulate previous quarter with some variance
-          const currentValue = week[topic] || 0
-          const variance = 0.7 + Math.random() * 0.6 // 70% to 130% of current
-          prevData[topic] = Math.round(currentValue * variance)
-        })
-        return prevData
-      })
-      setPreviousData(prevQuarterData)
+    const stats = calculateStats(displayData)
+    setStatistics(stats)
+  }, [displayData])
+
+  // Update data when view mode, time range, or quarter changes
+  useEffect(() => {
+    if (!allData.year) {
+      return // Wait for data to load
     }
-  }, [selectedTimeRange, allData])
+    
+    if (viewMode === "quarters") {
+      // Handle quarterly view
+      const latestYearWithData = findLatestYearWithData(allData.year)
+      
+      const currentQuarterData = filterDataByQuarter(allData.year, selectedQuarter, latestYearWithData)
+      
+      
+      // Get previous quarter data for comparison (except Q1)
+      if (selectedQuarter !== "Q1") {
+        const { quarter: prevQuarter, year: prevYear } = getPreviousQuarter(selectedQuarter, latestYearWithData)
+        const previousQuarterData = filterDataByQuarter(allData.year, prevQuarter, prevYear)
+        
+        // Merge current and previous quarter data into single dataset
+        const mergedData = mergeQuarterData(currentQuarterData, previousQuarterData)
+        setData(mergedData)
+        setDisplayData(mergedData)
+        setPreviousData([]) // No separate previous data needed
+      } else {
+        setData(currentQuarterData)
+        setDisplayData(currentQuarterData)
+        setPreviousData([])
+      }
+    } else {
+      // Handle time range view
+      if (allData[selectedTimeRange]) {
+        setData(allData[selectedTimeRange])
+        setDisplayData(allData[selectedTimeRange])
+        setPreviousData([]) // No comparison in time range mode
+      }
+    }
+  }, [viewMode, selectedTimeRange, selectedQuarter, allData])
 
   const handleLegendClick = (data: any) => {
     const topicName = data.value
@@ -431,11 +708,34 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
 
   // Calculate period-based trends (not just last week)
   const calculatePeriodTrends = () => {
-    if (data.length < 2) return DEFAULT_TOPICS.map(topic => ({ topic, change: 0, arrow: "→", positive: false, absoluteChange: 0, percentChange: 0 }))
+    // Always return valid structure even with no data
+    const defaultTrend = { 
+      topic: DEFAULT_TOPICS[0], 
+      change: "0", 
+      arrow: "→", 
+      positive: false, 
+      absoluteChange: 0, 
+      percentChange: 0 
+    }
+    
+    if (!displayData || displayData.length < 2) {
+      return DEFAULT_TOPICS.map(topic => ({ 
+        ...defaultTrend, 
+        topic 
+      }))
+    }
     
     // Get first and last data points based on time range
-    const firstWeek = data[0]
-    const lastWeek = data[data.length - 1]
+    const firstWeek = displayData[0]
+    const lastWeek = displayData[displayData.length - 1]
+    
+    // Ensure we have valid week data
+    if (!firstWeek || !lastWeek) {
+      return DEFAULT_TOPICS.map(topic => ({ 
+        ...defaultTrend, 
+        topic 
+      }))
+    }
     
     return DEFAULT_TOPICS.map(topic => {
       const firstValue = firstWeek[topic] || 0
@@ -456,46 +756,76 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
     })
   }
 
-  const periodTrends = calculatePeriodTrends()
+  const periodTrends = useMemo(() => calculatePeriodTrends(), [displayData])
   
   // Find notable performer (biggest absolute change)
-  const notablePerformer = periodTrends.reduce((notable, curr) => {
-    const notableAbsolute = Math.abs(notable.percentChange || 0)
-    const currAbsolute = Math.abs(curr.percentChange || 0)
-    return currAbsolute > notableAbsolute ? curr : notable
-  }, periodTrends[0])
+  const notablePerformer = useMemo(() => {
+    if (!periodTrends || periodTrends.length === 0) {
+      return {
+        topic: DEFAULT_TOPICS[0],
+        change: "0",
+        arrow: "→",
+        positive: false,
+        absoluteChange: 0,
+        percentChange: 0
+      }
+    }
+    
+    return periodTrends.reduce((notable, curr) => {
+      const notableAbsolute = Math.abs(notable.percentChange || 0)
+      const currAbsolute = Math.abs(curr.percentChange || 0)
+      return currAbsolute > notableAbsolute ? curr : notable
+    }, periodTrends[0])
+  }, [periodTrends])
 
   // Extract sparkline data for notable performer
   useEffect(() => {
-    if (onNotablePerformerChange && notablePerformer && data.length > 0) {
-      const sparklineData = data.map(week => ({
+    // Add guards to prevent invalid updates
+    if (
+      onNotablePerformerChange && 
+      notablePerformer && 
+      notablePerformer.topic && 
+      displayData.length > 2 && // Need at least 3 data points
+      !isLoading && // Don't update during loading
+      viewMode === "timeRange" // Only update in time range mode to prevent infinite loops
+    ) {
+      const sparklineData = displayData.map(week => ({
         value: week[notablePerformer.topic] || 0
       }))
-      onNotablePerformerChange({
-        topic: notablePerformer.topic,
-        change: String(notablePerformer.change),
-        arrow: notablePerformer.arrow,
-        positive: notablePerformer.positive,
-        data: sparklineData,
-        color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS]
-      })
+      
+      // Only update if we have valid data
+      if (sparklineData.some(d => d.value > 0)) {
+        onNotablePerformerChange({
+          topic: notablePerformer.topic,
+          change: String(notablePerformer.change || 0),
+          arrow: notablePerformer.arrow || "→",
+          positive: notablePerformer.positive || false,
+          data: sparklineData,
+          color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] || "#7C3AED"
+        })
+      }
     }
-  }, [notablePerformer, data, onNotablePerformerChange])
+  }, [notablePerformer, displayData, onNotablePerformerChange, isLoading, viewMode])
 
   // Calculate week-over-week trends for legend
-  const weeklyTrends = DEFAULT_TOPICS.map(topic => {
-    if (data.length < 2) return { topic, change: 0, arrow: "→", positive: false }
-    
-    const latest = data[data.length - 1][topic] || 0
-    const previous = data[data.length - 2][topic] || 0
-    const change = previous === 0 ? 0 : ((latest - previous) / previous * 100)
-    const arrow = change > 0 ? "↑" : change < 0 ? "↓" : "→"
-    
-    return { topic, change: Math.abs(change).toFixed(0), arrow, positive: change > 0 }
-  })
+  const weeklyTrends = useMemo(() => {
+    return DEFAULT_TOPICS.map(topic => {
+      if (displayData.length < 2) return { topic, change: 0, arrow: "→", positive: false }
+      
+      const latest = displayData[displayData.length - 1][topic] || 0
+      const previous = displayData[displayData.length - 2][topic] || 0
+      const change = previous === 0 ? 0 : ((latest - previous) / previous * 100)
+      const arrow = change > 0 ? "↑" : change < 0 ? "↓" : "→"
+      
+      return { topic, change: Math.abs(change).toFixed(0), arrow, positive: change > 0 }
+    })
+  }, [displayData])
 
   // Add velocity badge for notable performer
-  const velocityBadge = getVelocityBadge(notablePerformer.topic, data)
+  const velocityBadge = useMemo(() => 
+    getVelocityBadge(notablePerformer.topic, displayData), 
+    [notablePerformer.topic, displayData]
+  )
 
   const customLegendFormatter = (value: string) => {
     const isHidden = hiddenTopics.includes(value)
@@ -567,7 +897,9 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
                 )}>
                   {notablePerformer.arrow}{notablePerformer.change}%
                 </p>
-                <p className="text-xs font-medium text-white/60">({selectedTimeRange})</p>
+                <p className="text-xs font-medium text-white/60">
+                  ({viewMode === "quarters" ? selectedQuarter : selectedTimeRange})
+                </p>
               </div>
               {velocityBadge && (
                 <span className={cn(
@@ -613,13 +945,36 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         </div>
       </div>
 
-      {/* Comparison Mode Indicator - Commented out for now to prevent jarring movement */}
-      {/* {showComparison && (
+      {/* Quarterly View Indicator */}
+      {viewMode === "quarters" && displayData.length > 0 && (
         <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-2 rounded-lg mb-4 flex items-center gap-2 text-sm">
-          <span className="text-blue-400">📊 Comparison Mode:</span>
-          <span className="text-gray-300">Showing previous {selectedTimeRange} period as dashed lines</span>
+          <span className="text-blue-400">📊 Quarterly Comparison:</span>
+          <span className="text-gray-300">
+            {(() => {
+              // Get the actual year from the data being displayed
+              const dataYear = displayData[0]?.date 
+                ? new Date(displayData[0].date).getFullYear()
+                : displayData[0]?.fullWeek
+                ? new Date(displayData[0].fullWeek).getFullYear()
+                : new Date().getFullYear()
+                
+              if (selectedQuarter === "Q1") {
+                return `Showing ${dataYear} Q1 only`
+              } else {
+                const quarterNum = parseInt(selectedQuarter.substring(1))
+                const prevQuarter = `Q${quarterNum - 1}`
+                const isIncomplete = displayData.length < 13 // Less than full quarter
+                
+                if (isIncomplete) {
+                  return `Comparing first ${displayData.length} weeks of ${dataYear} ${selectedQuarter} with ${prevQuarter}`
+                } else {
+                  return `Comparing ${dataYear} ${selectedQuarter} with ${prevQuarter}`
+                }
+              }
+            })()}
+          </span>
         </div>
-      )} */}
+      )}
 
       <div
         className={cn(
@@ -641,22 +996,67 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
       >
         {/* Control buttons - positioned in top-right corner */}
         <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
-          {/* Time Range Selector */}
+          {/* Mode Toggle */}
           <div className="flex items-center border border-gray-600 rounded-lg overflow-hidden">
-            {(["1M", "3M", "6M"] as const).map((range) => (
-              <button
-                key={range}
-                onClick={() => setSelectedTimeRange(range)}
-                className={`text-xs px-2 py-1 transition-all duration-200 active:scale-95 ${
-                  selectedTimeRange === range
-                    ? "bg-gray-700 text-white"
-                    : "bg-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-300"
-                }`}
-              >
-                {range}
-              </button>
-            ))}
+            <button
+              onClick={() => setViewMode("timeRange")}
+              className={`text-xs px-3 py-1 transition-all duration-200 active:scale-95 ${
+                viewMode === "timeRange"
+                  ? "bg-gray-700 text-white"
+                  : "bg-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+              }`}
+            >
+              Time Range
+            </button>
+            <button
+              onClick={() => setViewMode("quarters")}
+              className={`text-xs px-3 py-1 transition-all duration-200 active:scale-95 ${
+                viewMode === "quarters"
+                  ? "bg-gray-700 text-white"
+                  : "bg-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+              }`}
+            >
+              Quarters
+            </button>
           </div>
+
+          {/* Time Range Selector - Show when in time range mode */}
+          {viewMode === "timeRange" && (
+            <div className="flex items-center border border-gray-600 rounded-lg overflow-hidden">
+              {(["1M", "3M", "6M"] as const).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setSelectedTimeRange(range)}
+                  className={`text-xs px-2 py-1 transition-all duration-200 active:scale-95 ${
+                    selectedTimeRange === range
+                      ? "bg-gray-700 text-white"
+                      : "bg-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+                  }`}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Quarter Selector - Show when in quarters mode */}
+          {viewMode === "quarters" && (
+            <div className="flex items-center border border-gray-600 rounded-lg overflow-hidden">
+              {(["Q1", "Q2", "Q3", "Q4"] as const).map((quarter) => (
+                <button
+                  key={quarter}
+                  onClick={() => setSelectedQuarter(quarter)}
+                  className={`text-xs px-2 py-1 transition-all duration-200 active:scale-95 ${
+                    selectedQuarter === quarter
+                      ? "bg-gray-700 text-white"
+                      : "bg-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+                  }`}
+                >
+                  {quarter}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Export Button */}
           <div className="relative" ref={exportDropdownRef}>
@@ -698,19 +1098,6 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
             )}
           </div>
 
-          {/* Compare periods button */}
-          <button
-            onClick={() => setShowComparison(!showComparison)}
-            className={cn(
-              "text-xs px-3 py-1.5 transition-all duration-200 hover:text-gray-200 active:scale-95 rounded-lg border",
-              showComparison 
-                ? "text-blue-400 bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/50" 
-                : "text-gray-400 hover:bg-gray-700/50 border-gray-600"
-            )}
-            title={showComparison ? "Hide comparison" : "Compare to previous period"}
-          >
-            ⟳ {showComparison ? "Hide" : "Show"} Quarterly
-          </button>
         </div>
 
         {/* Floating background orbs - much more subtle */}
@@ -729,8 +1116,8 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         
         <ResponsiveContainer width="100%" height={400}>
           <LineChart
-            data={data}
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            data={displayData}
+            margin={{ top: 5, right: 30, left: 20, bottom: viewMode === "quarters" ? 40 : 5 }}
             onMouseMove={(e) => {
               if (e && e.activeLabel !== undefined && e.activeCoordinate) {
                 setMouseCoords({
@@ -764,8 +1151,11 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
             <XAxis 
               dataKey="week" 
               stroke="rgba(255,255,255,0.5)"
-              tick={{ fill: 'rgba(255,255,255,0.5)' }}
-              label={{ value: 'Week', position: 'insideBottom', offset: -5, style: { fill: 'rgba(255,255,255,0.5)' } }}
+              tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: viewMode === "quarters" ? 11 : 12 }}
+              angle={viewMode === "quarters" ? -45 : 0}
+              textAnchor={viewMode === "quarters" ? 'end' : 'middle'}
+              interval={viewMode === "quarters" ? 'preserveStartEnd' : 'preserveStartEnd'}
+              height={viewMode === "quarters" ? 60 : 30}
             />
             <YAxis 
               stroke="rgba(255,255,255,0.5)"
@@ -828,24 +1218,23 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
               />
             ))}
 
-            {/* Previous quarter comparison lines (if enabled) */}
-            {showComparison && previousData.length > 0 &&
-              DEFAULT_TOPICS.map((topic) => (
-                <Line
-                  key={`${topic}-prev`}
-                  type="monotone"
-                  dataKey={topic}
-                  data={previousData}
-                  stroke={TOPIC_COLORS[topic as keyof typeof TOPIC_COLORS]}
-                  strokeWidth={1.5}
-                  strokeOpacity={0.4}
-                  strokeDasharray="3 6"
-                  dot={false}
-                  hide={hiddenTopics.includes(topic)}
-                  name={`${topic} (Previous Period)`}
-                />
-              ))
-            }
+
+            {/* Previous quarter lines (when in quarter mode and not Q1) */}
+            {viewMode === "quarters" && selectedQuarter !== "Q1" && DEFAULT_TOPICS.map((topic) => (
+              <Line
+                key={`${topic}-prev`}
+                type="monotone"
+                dataKey={`${topic}_prev`}
+                stroke={TOPIC_COLORS[topic as keyof typeof TOPIC_COLORS]}
+                strokeWidth={1.5}
+                strokeOpacity={0.35}
+                dot={false}
+                hide={hiddenTopics.includes(topic)}
+                isAnimationActive={false}
+                connectNulls={true}
+                legendType="none"
+              />
+            ))}
 
             {/* Current period lines */}
             {DEFAULT_TOPICS.map((topic) => (
@@ -854,7 +1243,7 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
                 type="monotone"
                 dataKey={topic}
                 stroke={TOPIC_COLORS[topic as keyof typeof TOPIC_COLORS]}
-                strokeWidth={hoveredLine === topic ? 4 : 2}
+                strokeWidth={hoveredLine === topic ? 4 : viewMode === "quarters" ? 3 : 2}
                 dot={false}
                 hide={hiddenTopics.includes(topic)}
                 onMouseEnter={() => setHoveredLine(topic)}
