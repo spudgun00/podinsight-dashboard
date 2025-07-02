@@ -427,23 +427,35 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
       }
     }
     
+    // Determine how many weeks to show comparison data
+    let lastDataWeekIndex = -1
+    
+    // Count how many weeks in the previous quarter had actual data
+    let previousQuarterValidWeeks = 0
+    for (let i = 0; i < sortedPrevious.length; i++) {
+      if (sortedPrevious[i]) {
+        const hasData = DEFAULT_TOPICS.some(topic => 
+          sortedPrevious[i][topic] !== null && 
+          sortedPrevious[i][topic] !== undefined && 
+          sortedPrevious[i][topic] !== 0
+        )
+        if (hasData) previousQuarterValidWeeks++
+      }
+    }
+    
+    // The comparison should only extend as far as the previous quarter had data
+    if (previousQuarterValidWeeks > 0) {
+      // Map the previous quarter's data length to current quarter's weeks
+      lastDataWeekIndex = Math.min(previousQuarterValidWeeks - 1, expectedWeeks.length - 1)
+    } else {
+      // If no valid data in previous quarter, use all weeks
+      lastDataWeekIndex = expectedWeeks.length - 1
+    }
     
     // Create merged data for all expected weeks
     return expectedWeeks.map((weekString, index) => {
       // Find actual data for this week
       const currentWeek = sortedCurrent.find(d => (d.week || d.fullWeek) === weekString)
-      
-      // Calculate relative position for previous quarter mapping
-      const relativePosition = expectedWeeks.length > 1 
-        ? index / (expectedWeeks.length - 1) 
-        : 0
-      
-      // Find corresponding week in previous quarter based on relative position
-      const prevIndex = sortedPrevious.length > 1
-        ? Math.round(relativePosition * (sortedPrevious.length - 1))
-        : 0
-      
-      const prevWeek = sortedPrevious[prevIndex]
       
       const mergedWeek: any = {
         week: weekString,
@@ -462,15 +474,28 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         })
       }
       
-      // Add previous quarter data with _prev suffix
-      if (prevWeek) {
-        DEFAULT_TOPICS.forEach(topic => {
-          if (prevWeek[topic] !== undefined) {
-            mergedWeek[`${topic}_prev`] = prevWeek[topic]
-          }
-        })
+      // Add previous quarter data with _prev suffix only up to the last data week
+      if (index <= lastDataWeekIndex) {
+        // Calculate relative position for previous quarter mapping
+        const relativePosition = lastDataWeekIndex > 0 
+          ? index / lastDataWeekIndex 
+          : 0
+        
+        // Find corresponding week in previous quarter based on relative position
+        const prevIndex = sortedPrevious.length > 1
+          ? Math.round(relativePosition * (sortedPrevious.length - 1))
+          : 0
+        
+        const prevWeek = sortedPrevious[prevIndex]
+        
+        if (prevWeek) {
+          DEFAULT_TOPICS.forEach(topic => {
+            if (prevWeek[topic] !== undefined) {
+              mergedWeek[`${topic}_prev`] = prevWeek[topic]
+            }
+          })
+        }
       }
-      
       
       return mergedWeek
     })
@@ -514,8 +539,11 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
       ? growthRates.reduce((a, b) => a + b, 0) / growthRates.length 
       : 0
       
-    const trendingTopic = Object.entries(topicTotals)
-      .sort(([, a], [, b]) => b - a)[0]?.[0] || ""
+    // Only show trending topic if there's actual data
+    const trendingTopic = totalMentions > 0 
+      ? Object.entries(topicTotals)
+          .sort(([, a], [, b]) => b - a)[0]?.[0] || ""
+      : ""
       
     return {
       totalMentions,
@@ -725,12 +753,41 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
       }))
     }
     
-    // Get first and last data points based on time range
-    const firstWeek = displayData[0]
-    const lastWeek = displayData[displayData.length - 1]
+    // For quarterly view, only consider weeks with actual data (not null)
+    let firstWeekIndex = 0
+    let lastWeekIndex = displayData.length - 1
+    
+    if (viewMode === "quarters") {
+      // Find first week with data
+      for (let i = 0; i < displayData.length; i++) {
+        const hasData = DEFAULT_TOPICS.some(topic => {
+          const value = displayData[i][topic]
+          return value !== null && value !== undefined && value !== 0
+        })
+        if (hasData) {
+          firstWeekIndex = i
+          break
+        }
+      }
+      
+      // Find last week with data
+      for (let i = displayData.length - 1; i >= 0; i--) {
+        const hasData = DEFAULT_TOPICS.some(topic => {
+          const value = displayData[i][topic]
+          return value !== null && value !== undefined && value !== 0
+        })
+        if (hasData) {
+          lastWeekIndex = i
+          break
+        }
+      }
+    }
+    
+    const firstWeek = displayData[firstWeekIndex]
+    const lastWeek = displayData[lastWeekIndex]
     
     // Ensure we have valid week data
-    if (!firstWeek || !lastWeek) {
+    if (!firstWeek || !lastWeek || firstWeekIndex === lastWeekIndex) {
       return DEFAULT_TOPICS.map(topic => ({ 
         ...defaultTrend, 
         topic 
@@ -830,7 +887,11 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
   const customLegendFormatter = (value: string) => {
     const isHidden = hiddenTopics.includes(value)
     const isHovered = hoveredLine === value
-    const trend = weeklyTrends.find(t => t.topic === value)
+    
+    // Use period trends for quarterly view, weekly trends otherwise
+    const trendsToUse = viewMode === "quarters" ? periodTrends : weeklyTrends
+    const trend = trendsToUse.find(t => t.topic === value)
+    const trendLabel = viewMode === "quarters" ? `(${selectedQuarter})` : "w/w"
 
     return (
       <span
@@ -845,7 +906,7 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         {value}{" "}
         {trend && (
           <span className={trend.positive ? "text-green-400" : "text-red-400"}>
-            {trend.arrow}{trend.change}% w/w
+            {trend.arrow}{trend.change}% {trendLabel}
           </span>
         )}
       </span>

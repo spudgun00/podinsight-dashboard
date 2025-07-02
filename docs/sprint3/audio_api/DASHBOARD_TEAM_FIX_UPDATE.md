@@ -89,3 +89,75 @@ curl "https://podinsight-api.vercel.app/api/v1/audio_clips/685ba776e4f9ec2f07562
 **The route ordering bug was preventing ANY request from working. This is now fixed.**
 
 Please test again once Vercel deployment completes (~6 minutes from now).
+
+---
+
+# Dashboard Quarterly Chart Fixes
+
+**Date**: July 2, 2025  
+**Time**: 10:15 AM BST  
+**Status**: ✅ FIXES COMPLETED
+
+## Issues Fixed
+
+### 1. Q2 Percentage Calculation (0% for all topics)
+**Problem**: Q2 was showing 0% change for all topics in the legend and notable performer  
+**Root Cause**: 
+- Legend was showing week-over-week (w/w) percentages
+- Last 2 weeks of Q2 (W25-W26) had no data, resulting in 0% w/w change
+- Period trends were calculated correctly but not displayed in the legend
+
+**Fix**: 
+- Updated legend formatter to use period trends in quarterly view
+- Shows full quarter percentage change (W14 to W24) instead of w/w
+- Display format: "AI Agents ↓56% (Q2)" instead of "AI Agents →0% w/w"
+
+### 2. Q3 Comparison Line Extended Too Far
+**Problem**: Q3 comparison line from Q2 extended to W39 instead of stopping at W37  
+**Root Cause**: 
+- Code was checking current quarter's data to determine comparison line length
+- Should have been checking previous quarter's data length instead
+
+**Fix**:
+- Count actual data weeks in previous quarter (Q2 has 11 weeks: W14-W24)
+- Limit comparison line to same length (Q3 shows Q2 line only for W27-W37)
+- Ensures apples-to-apples comparison of equal time periods
+
+### 3. Q3 Showing "Trending Topic" with No Data
+**Problem**: Q3 displayed "Trending Topic: AI Agents" despite having no data  
+**Root Cause**: 
+- Trending topic calculation didn't check if quarter had any data
+- Was based on highest total mentions, defaulting to first topic
+
+**Fix**:
+- Added check for totalMentions > 0 before calculating trending topic
+- Shows "—" when no data exists in the quarter
+- Only displays trending topic when actual data is present
+
+## Technical Changes
+
+1. **calculatePeriodTrends** (line 710-780):
+   - Added logic to find first/last weeks with actual data
+   - Handles null values in incomplete quarters correctly
+
+2. **customLegendFormatter** (line 891-918):
+   - Uses periodTrends in quarterly view instead of weeklyTrends
+   - Shows quarter label (Q2) instead of w/w
+
+3. **mergeQuarterData** (line 431-454):
+   - Counts valid data weeks in previous quarter
+   - Limits comparison line to match previous quarter's data length
+
+4. **calculateStats** (line 543-547):
+   - Only calculates trending topic when totalMentions > 0
+
+## Testing Verified
+
+- ✅ Q1: Shows correct period percentages
+- ✅ Q2: Shows correct percentages (W14 to W24)
+- ✅ Q3: Comparison line stops at W37, no trending topic shown
+- ✅ Q4: Behaves correctly with limited comparison data
+
+---
+
+All fixes have been implemented and tested successfully.
