@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils"
 import { Download, ImageIcon, FileText, Link } from "lucide-react"
 
 interface TopicVelocityChartProps {
-  onNotablePerformerChange?: (performer: { topic: string; change: string; arrow: string; positive: boolean; data: any[]; color: string }) => void
+  onNotablePerformerChange?: (performer: { topic: string; change: string; arrow: string; positive: boolean; data: any[]; color: string; yDomain?: [number, number] }) => void
 }
 
 // Generate insights based on actual data
@@ -600,7 +600,19 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
       chartData.push(weekData)
     })
     
-    return chartData
+    // Find the last week with actual data (non-zero mentions for any topic)
+    let lastDataIndex = -1
+    for (let i = chartData.length - 1; i >= 0; i--) {
+      const hasNonZeroData = DEFAULT_TOPICS.some(topic => chartData[i][topic] > 0)
+      if (hasNonZeroData) {
+        lastDataIndex = i
+        break
+      }
+    }
+    
+    // Return data up to and including the last week with actual data
+    // This removes trailing weeks that are all zeros (future weeks)
+    return lastDataIndex >= 0 ? chartData.slice(0, lastDataIndex + 1) : []
   }
 
   // Preload all data on mount
@@ -850,6 +862,25 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         value: week[notablePerformer.topic] || 0
       }))
       
+      // Calculate global Y-axis domain from all topics in displayData
+      let minValue = Infinity
+      let maxValue = -Infinity
+      
+      displayData.forEach(week => {
+        DEFAULT_TOPICS.forEach(topic => {
+          const value = week[topic] || 0
+          if (value < minValue) minValue = value
+          if (value > maxValue) maxValue = value
+        })
+      })
+      
+      // Add some padding to the domain
+      const padding = (maxValue - minValue) * 0.1
+      const yDomain: [number, number] = [
+        Math.max(0, minValue - padding), // Don't go below 0
+        maxValue + padding
+      ]
+      
       // Only update if we have valid data
       if (sparklineData.some(d => d.value > 0)) {
         onNotablePerformerChange({
@@ -858,7 +889,8 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
           arrow: notablePerformer.arrow || "→",
           positive: notablePerformer.positive || false,
           data: sparklineData,
-          color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] || "#7C3AED"
+          color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] || "#7C3AED",
+          yDomain
         })
       }
     }

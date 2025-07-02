@@ -5,7 +5,7 @@ import type React from "react"
 import { motion, animate } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { useEffect, useState } from "react"
-import { LineChart, Line, ResponsiveContainer } from "recharts"
+import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts"
 import type { MetricCardProps } from "@/lib/types"
 
 const AnimatedNumber = ({ value }: { value: number }) => {
@@ -28,7 +28,7 @@ const AnimatedNumber = ({ value }: { value: number }) => {
   return <span ref={ref}>{currentValue.toLocaleString()}</span>
 }
 
-const TrendingSparkline = ({ data, color }: { data?: any[], color?: string }) => {
+const TrendingSparkline = ({ data, color, yDomain }: { data?: any[], color?: string, yDomain?: [number | 'auto' | 'dataMin' | 'dataMax', number | 'auto' | 'dataMin' | 'dataMax'] }) => {
   if (!data || data.length === 0) {
     return null
   }
@@ -37,6 +37,7 @@ const TrendingSparkline = ({ data, color }: { data?: any[], color?: string }) =>
     <div className="w-16 h-[50px] ml-2">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
+          <YAxis domain={yDomain || ['dataMin', 'dataMax']} hide />
           <Line
             type="monotone"
             dataKey="value"
@@ -51,7 +52,7 @@ const TrendingSparkline = ({ data, color }: { data?: any[], color?: string }) =>
   )
 }
 
-export function MetricCard({ title, value, icon, animation = "none", unit, sparklineData, sparklineColor }: MetricCardProps & { sparklineData?: any[], sparklineColor?: string }) {
+export function MetricCard({ title, value, icon, animation = "none", unit, sparklineData, sparklineColor, sparklineYDomain }: MetricCardProps & { sparklineData?: any[], sparklineColor?: string, sparklineYDomain?: [number | 'auto' | 'dataMin' | 'dataMax', number | 'auto' | 'dataMin' | 'dataMax'] }) {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
@@ -96,7 +97,7 @@ export function MetricCard({ title, value, icon, animation = "none", unit, spark
           {unit && <span className="text-sm font-sans ml-1 text-white/70">{unit}</span>}
         </div>
       </div>
-      {showSparkline && <TrendingSparkline data={sparklineData} color={sparklineColor} />}
+      {showSparkline && <TrendingSparkline data={sparklineData} color={sparklineColor} yDomain={sparklineYDomain} />}
     </motion.div>
   )
 }

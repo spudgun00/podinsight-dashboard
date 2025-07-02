@@ -30,6 +30,7 @@ export default function DashboardPage() {
     positive: boolean
     data: any[]
     color: string
+    yDomain?: [number, number]
   } | null>(null)
   const [sentimentData, setSentimentData] = useState<SentimentData[]>([])
   const [isLoadingSentiment, setIsLoadingSentiment] = useState(true)
@@ -85,6 +86,7 @@ export default function DashboardPage() {
               icon={<TrendingUp size={24} />} 
               sparklineData={notablePerformer?.data}
               sparklineColor={notablePerformer?.color}
+              sparklineYDomain={notablePerformer?.yDomain}
             />
             <MetricCard title="Episodes Analyzed" value={1171} icon={<BarChart2 size={24} />} animation="count-up" />
             <MetricCard title="Insights Generated" value="Real-time" icon={<Zap size={24} />} animation="pulse" />
