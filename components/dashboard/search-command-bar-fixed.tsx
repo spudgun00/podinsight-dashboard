@@ -541,19 +541,15 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
     <div className="relative" ref={containerRef}>
       {/* Search Input */}
       <div
-        className={`relative bg-gray-900 transition-all duration-300 ${
+        className={`relative intel-bg-card transition-all duration-300 ${
           shouldShowResults && mode === "inline" ? "rounded-t-xl" : "rounded-xl"
-        } ${
-          isFocused ? "border-gradient-enhanced shadow-focus-glow" : "border-gradient-subtle"
         } ${mode === "modal" ? "shadow-2xl" : ""}`}
         style={{
           height: "56px",
-          background:
-            "linear-gradient(135deg, rgb(17, 24, 39), rgb(17, 24, 39)) padding-box, linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2)) border-box",
-          border: "1px solid transparent",
+          border: isFocused ? "1px solid var(--accent-purple)" : "1px solid var(--border-subtle)",
           boxShadow: isFocused
-            ? "inset 0 1px 0 rgba(255,255,255,0.05), 0 0 0 1px rgba(139, 92, 246, 0.1), 0 4px 12px rgba(139, 92, 246, 0.15)"
-            : "inset 0 1px 0 rgba(255,255,255,0.05), 0 0 0 1px rgba(255,255,255,0.1)",
+            ? "0 0 0 1px var(--accent-purple), 0 4px 12px var(--accent-purple-glow)"
+            : "0 2px 8px rgba(0, 0, 0, 0.4)",
         }}
       >
         <div className="flex items-center justify-between h-full px-4">
@@ -578,7 +574,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
               onBlur={handleInputBlur}
               onKeyDown={handleKeyDown}
               placeholder="Ask anything about podcast trends, topics, or insights..."
-              className="flex-1 bg-transparent text-base text-gray-100 placeholder-gray-400 border-none outline-none"
+              className="flex-1 bg-transparent text-base intel-text-primary placeholder-gray-400 border-none outline-none"
               autoComplete="off"
               spellCheck="false"
             />

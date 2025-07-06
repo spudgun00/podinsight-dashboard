@@ -105,7 +105,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="min-h-screen w-full intel-bg-primary">
       <DashboardHeader />
       <main className="px-4 md:px-8 pb-12">
         <div className="max-w-7xl mx-auto">
@@ -166,7 +166,7 @@ export default function DashboardPage() {
             />
           </motion.div>
 
-          <footer className="mt-8 text-center text-sm text-white/50">
+          <footer className="mt-8 text-center text-sm intel-text-secondary">
             <p>Last updated: {lastUpdated} seconds ago. Tracking 5 topics across 29 podcasts.</p>
           </footer>
         </div>

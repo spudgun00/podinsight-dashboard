@@ -9,9 +9,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0A0A0A",
-        foreground: "#FFFFFF",
-        "brand-purple": "#7C3AED",
+        // Episode Intelligence Design System
+        background: "var(--bg-primary)",
+        foreground: "var(--text-primary)",
+        "intel": {
+          "bg-primary": "var(--bg-primary)",
+          "bg-card": "var(--bg-card)",
+          "border": "var(--border-subtle)",
+          "text-primary": "var(--text-primary)",
+          "text-secondary": "var(--text-secondary)",
+          "purple": "var(--accent-purple)",
+          "purple-glow": "var(--accent-purple-glow)",
+        },
+        // Brand colors
+        "brand-purple": "#8B5CF6",
         "brand-blue": "#3B82F6",
         "brand-emerald": "#10B981",
         "brand-coral": "#F59E0B",
@@ -23,12 +34,12 @@ const config: Config = {
         "signal-orange": "#F59E0B",
         "signal-green": "#10B981",
         "signal-blue": "#3B82F6",
-        // Card backgrounds
-        "card-bg": "#111111",
-        "card-border": "#262626",
+        // Legacy card backgrounds (deprecated)
+        "card-bg": "var(--bg-card)",
+        "card-border": "var(--border-subtle)",
         "card-dark": "#0f0f0f",
         // Text colors
-        "intel-gray": "#9CA3AF",
+        "intel-gray": "var(--text-secondary)",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

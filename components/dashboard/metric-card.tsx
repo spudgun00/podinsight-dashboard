@@ -79,11 +79,11 @@ export function MetricCard({ title, value, icon, animation = "none", unit, spark
   return (
     <motion.div
       variants={cardVariants}
-      className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-4 flex items-center space-x-4 transition-all duration-300 hover:bg-white/10 hover:scale-105 shadow-xl shadow-purple-500/5"
+      className="intel-card intel-card-clickable flex items-center space-x-4"
     >
       <div className="p-2 rounded-md" style={{ ...iconStyle, ...bgStyle }}>{icon}</div>
       <div className="flex-1">
-        <p className="text-sm text-white/70">{title}</p>
+        <p className="text-sm intel-text-secondary">{title}</p>
         <div className="text-xl font-bold font-mono flex items-center">
           {animation === "count-up" && typeof value === "number" ? <AnimatedNumber value={value} /> : value}
           {animation === "pulse" && (
@@ -94,7 +94,7 @@ export function MetricCard({ title, value, icon, animation = "none", unit, spark
               }}
             />
           )}
-          {unit && <span className="text-sm font-sans ml-1 text-white/70">{unit}</span>}
+          {unit && <span className="text-sm font-sans ml-1 intel-text-secondary">{unit}</span>}
         </div>
       </div>
       {showSparkline && <TrendingSparkline data={sparklineData} color={sparklineColor} yDomain={sparklineYDomain} />}

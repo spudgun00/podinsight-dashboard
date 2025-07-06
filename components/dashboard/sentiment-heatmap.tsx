@@ -115,7 +115,7 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
 
   if (isLoading) {
     return (
-      <div className="bg-black/30 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-purple-500/20 p-6">
+      <div className="intel-card">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-700 rounded w-1/3 mb-2"></div>
           <div className="h-4 bg-gray-700 rounded w-1/2 mb-6"></div>
@@ -130,7 +130,7 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
   }
 
   return (
-    <div className="bg-black/30 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-purple-500/20 ring-1 ring-white/10 p-6 relative overflow-hidden">
+    <div className="intel-card relative overflow-hidden">
       {/* Background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-brand-purple/[0.02] rounded-full blur-2xl"></div>
@@ -141,8 +141,8 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
         {/* Header with Time Range Filter */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-semibold text-white mb-2">Sentiment Analysis Heatmap</h3>
-            <p className="text-sm text-gray-400">AI-powered sentiment tracking across topics and time</p>
+            <h3 className="text-xl font-semibold intel-text-primary mb-2">Sentiment Analysis Heatmap</h3>
+            <p className="text-sm intel-text-secondary">AI-powered sentiment tracking across topics and time</p>
           </div>
 
           {/* Time Range Selector */}

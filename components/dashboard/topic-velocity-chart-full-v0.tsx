@@ -1039,22 +1039,9 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
       </div>
 
       <div
-        className={cn(
-          "bg-black/30 backdrop-blur-2xl border rounded-xl shadow-2xl shadow-purple-500/20 ring-1 ring-white/10 p-4 md:p-6 relative overflow-hidden group transition-all duration-300",
-          isChartHovered
-            ? "border-purple-500/50 shadow-purple-500/30"
-            : "border-white/10"
-        )}
+        className="intel-card intel-card-clickable relative overflow-hidden"
         onMouseEnter={() => setIsChartHovered(true)}
         onMouseLeave={() => setIsChartHovered(false)}
-        style={{
-          background: isChartHovered
-            ? "linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(139,92,246,0.05) 50%, rgba(0,0,0,0.4) 100%), rgba(0,0,0,0.3)"
-            : undefined,
-          boxShadow: isChartHovered
-            ? "0 25px 50px -12px rgba(139, 92, 246, 0.25), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.1)"
-            : "0 25px 50px -12px rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.05)",
-        }}
       >
         {/* Control buttons - positioned in top-right corner */}
         <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
@@ -1132,7 +1119,7 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
 
             {/* Export Dropdown */}
             {showExportDropdown && (
-              <div className="absolute top-full right-0 mt-2 w-48 bg-black/80 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl shadow-purple-500/20 ring-1 ring-white/5 z-50">
+              <div className="absolute top-full right-0 mt-2 w-48 intel-bg-card backdrop-blur-xl border intel-border-subtle rounded-lg shadow-2xl shadow-purple-500/20 ring-1 ring-white/5 z-50">
                 <div className="p-2">
                   <button
                     onClick={() => handleExport("png")}
