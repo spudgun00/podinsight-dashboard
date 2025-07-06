@@ -18,29 +18,30 @@ interface SentimentHeatmapProps {
 
 type TimeRange = "1M" | "3M" | "6M" | "1Y" | "All"
 
-// Fixed HSL-based color interpolation
+// Fixed color interpolation for dark theme
 const getSentimentColor = (sentiment: number): string => {
   // Clamp sentiment between -1 and 1
   const clampedSentiment = Math.max(-1, Math.min(1, sentiment))
+  const absSentiment = Math.abs(clampedSentiment)
 
-  if (clampedSentiment < 0) {
-    // Interpolate from red (0°) to yellow (60°)
-    const hue = (clampedSentiment + 1) * 60 // 0 to 60
-    return `hsl(${hue}, 70%, 50%)`
+  if (clampedSentiment === 0) {
+    return "rgba(255, 255, 255, 0.05)" // Neutral
+  } else if (clampedSentiment > 0) {
+    // Positive (green)
+    if (absSentiment <= 0.33) return "rgba(34, 197, 94, 0.2)" // Light
+    if (absSentiment <= 0.66) return "rgba(34, 197, 94, 0.4)" // Medium
+    return "rgba(34, 197, 94, 0.6)" // Strong
   } else {
-    // Interpolate from yellow (60°) to green (120°)
-    const hue = 60 + clampedSentiment * 60 // 60 to 120
-    return `hsl(${hue}, 70%, 50%)`
+    // Negative (red)
+    if (absSentiment <= 0.33) return "rgba(239, 68, 68, 0.2)" // Light
+    if (absSentiment <= 0.66) return "rgba(239, 68, 68, 0.4)" // Medium
+    return "rgba(239, 68, 68, 0.6)" // Strong
   }
 }
 
 // Get appropriate text color for contrast
 const getTextColor = (sentiment: number): string => {
-  // Use dark text on yellow/light colors, white on dark colors
-  if (sentiment > -0.3 && sentiment < 0.3) {
-    return "#000000" // Dark text on yellow
-  }
-  return "#FFFFFF" // White text on red/green
+  return "#FFFFFF" // Always white text on dark backgrounds
 }
 
 
@@ -130,7 +131,13 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
   }
 
   return (
-    <div className="intel-card relative overflow-hidden">
+    <div className="relative overflow-hidden" style={{
+      backgroundColor: "#1A1A1C",
+      border: "1px solid rgba(255, 255, 255, 0.06)",
+      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)",
+      borderRadius: "16px",
+      padding: "20px"
+    }}>
       {/* Background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-brand-purple/[0.02] rounded-full blur-2xl"></div>
@@ -141,21 +148,26 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
         {/* Header with Time Range Filter */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-semibold intel-text-primary mb-2">Sentiment Analysis Heatmap</h3>
-            <p className="text-sm intel-text-secondary">AI-powered sentiment tracking across topics and time</p>
+            <h3 className="text-xl font-semibold text-white mb-1">Sentiment Analysis Heatmap</h3>
+            <p className="text-sm" style={{ color: "#9CA3AF" }}>AI-powered sentiment tracking across topics and time</p>
           </div>
 
           {/* Time Range Selector */}
-          <div className="flex items-center border border-gray-600 rounded-lg overflow-hidden">
+          <div className="flex items-center gap-1">
             {(["1M", "3M", "6M", "1Y", "All"] as const).map((range) => (
               <button
                 key={range}
                 onClick={() => setSelectedTimeRange(range)}
-                className={`text-xs px-3 py-1.5 transition-all duration-200 ${
-                  selectedTimeRange === range
-                    ? "bg-gray-700 text-white"
-                    : "bg-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-300"
-                }`}
+                className="transition-all duration-200"
+                style={{
+                  background: selectedTimeRange === range ? "rgba(139, 92, 246, 0.2)" : "transparent",
+                  border: selectedTimeRange === range ? "1px solid #8B5CF6" : "1px solid rgba(255, 255, 255, 0.06)",
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  color: selectedTimeRange === range ? "#FFFFFF" : "#9CA3AF",
+                  fontWeight: selectedTimeRange === range ? 500 : 400
+                }}
               >
                 {range}
               </button>
@@ -181,8 +193,13 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
             {topics.map((topic) => (
               <React.Fragment key={topic}>
                 {/* Topic label */}
-                <div className="text-sm text-gray-300 py-2 pr-3 text-right flex items-center justify-end">
-                  <span className="whitespace-nowrap font-medium">{topic}</span>
+                <div className="text-sm py-2 flex items-center justify-end" style={{
+                  background: "transparent",
+                  color: "white",
+                  fontWeight: 500,
+                  paddingRight: "16px"
+                }}>
+                  <span className="whitespace-nowrap">{topic}</span>
                 </div>
 
                 {/* Sentiment cells */}
@@ -194,21 +211,18 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
                   const isHovered = hoveredCell?.topic === topic && hoveredCell?.week === week
                   const isSelected = selectedCell?.topic === topic && selectedCell?.week === week
 
-                  const backgroundColor = hasData ? getSentimentColor(sentiment) : '#1a1a1a'
+                  const backgroundColor = hasData ? getSentimentColor(sentiment) : '#0F0F11'
                   const textColor = hasData ? getTextColor(sentiment) : '#666666'
 
                   return (
                     <div
                       key={`${topic}-${week}`}
-                      className={`relative h-8 rounded cursor-pointer border transition-all duration-200 ${
-                        isSelected
-                          ? "border-white/50 ring-2 ring-white/30"
-                          : isHovered
-                            ? "border-white/30"
-                            : "border-white/20"
-                      }`}
+                      className="relative cursor-pointer transition-all duration-200"
                       style={{
-                        backgroundColor,
+                        background: backgroundColor,
+                        border: isHovered ? "1px solid rgba(139, 92, 246, 0.5)" : "1px solid rgba(255, 255, 255, 0.03)",
+                        borderRadius: "4px",
+                        height: "40px"
                       }}
                       onMouseEnter={(e) => handleCellHover(topic, week, e)}
                       onMouseLeave={handleCellLeave}
@@ -217,12 +231,17 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
                       {/* Cell content */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         {hasData ? (
-                          <span className="text-xs font-mono font-semibold" style={{ color: textColor }}>
+                          <span style={{ 
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            color: textColor,
+                            fontFamily: "monospace"
+                          }}>
                             {sentiment >= 0 ? "+" : ""}
                             {sentiment.toFixed(2)}
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-600">--</span>
+                          <span style={{ fontSize: "13px", color: "#666666" }}>--</span>
                         )}
                       </div>
                     </div>
@@ -233,29 +252,27 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
           </div>
 
           {/* Legend */}
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <span className="text-xs text-gray-400 font-medium">Negative</span>
-            <div className="relative">
-              <div className="flex h-4 w-64 rounded-full overflow-hidden border border-white/10">
-                {Array.from({ length: 100 }).map((_, i) => {
-                  const sentiment = (i / 99) * 2 - 1 // -1 to 1
-                  return (
-                    <div
-                      key={i}
-                      className="flex-1 h-full"
-                      style={{ backgroundColor: getSentimentColor(sentiment) }}
-                    ></div>
-                  )
-                })}
+          <div className="flex items-center justify-center gap-6 mt-6">
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color: "#9CA3AF" }}>Negative</span>
+              <div className="flex items-center gap-1">
+                <div style={{ width: "24px", height: "16px", backgroundColor: "rgba(239, 68, 68, 0.2)", borderRadius: "4px" }}></div>
+                <div style={{ width: "24px", height: "16px", backgroundColor: "rgba(239, 68, 68, 0.4)", borderRadius: "4px" }}></div>
+                <div style={{ width: "24px", height: "16px", backgroundColor: "rgba(239, 68, 68, 0.6)", borderRadius: "4px" }}></div>
               </div>
-              {/* Tick marks */}
-              <div className="absolute -bottom-4 left-0 text-xs text-gray-500 font-mono">-1.0</div>
-              <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 font-mono">
-                0.0
-              </div>
-              <div className="absolute -bottom-4 right-0 text-xs text-gray-500 font-mono">+1.0</div>
             </div>
-            <span className="text-xs text-gray-400 font-medium">Positive</span>
+            <div className="flex items-center gap-2">
+              <div style={{ width: "24px", height: "16px", backgroundColor: "rgba(255, 255, 255, 0.05)", borderRadius: "4px" }}></div>
+              <span className="text-xs" style={{ color: "#9CA3AF" }}>Neutral</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <div style={{ width: "24px", height: "16px", backgroundColor: "rgba(34, 197, 94, 0.2)", borderRadius: "4px" }}></div>
+                <div style={{ width: "24px", height: "16px", backgroundColor: "rgba(34, 197, 94, 0.4)", borderRadius: "4px" }}></div>
+                <div style={{ width: "24px", height: "16px", backgroundColor: "rgba(34, 197, 94, 0.6)", borderRadius: "4px" }}></div>
+              </div>
+              <span className="text-xs" style={{ color: "#9CA3AF" }}>Positive</span>
+            </div>
           </div>
         </div>
       </div>
@@ -270,7 +287,11 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
             transform: "translate(-50%, -100%)",
           }}
         >
-          <div className="bg-black/90 backdrop-blur-xl border border-white/20 rounded-lg px-3 py-2 shadow-2xl mb-2">
+          <div className="backdrop-blur-xl rounded-lg px-3 py-2 shadow-2xl mb-2" style={{
+            backgroundColor: "#1A1A1C",
+            border: "1px solid rgba(139, 92, 246, 0.5)",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.8)"
+          }}>
             {(() => {
               const dataPoint = getDataPoint(hoveredCell.topic, hoveredCell.week)
               const sentiment = dataPoint?.sentiment ?? 0

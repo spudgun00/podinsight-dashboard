@@ -141,10 +141,33 @@ export default function DashboardPage() {
               sparklineData={notablePerformer?.data}
               sparklineColor={notablePerformer?.color}
               sparklineYDomain={notablePerformer?.yDomain}
+              change={notablePerformer?.change}
+              changeType={notablePerformer?.positive ? "positive" : "negative"}
             />
-            <MetricCard title="Episodes Analyzed" value={1171} icon={<BarChart2 size={24} />} animation="count-up" />
-            <MetricCard title="Insights Generated" value="Real-time" icon={<Zap size={24} />} animation="pulse" />
-            <MetricCard title="Data Freshness" value="Live" icon={<CheckCircle size={24} />} animation="pulse" />
+            <MetricCard 
+              title="Episodes Analyzed" 
+              value={1171} 
+              icon={<BarChart2 size={24} />} 
+              animation="count-up" 
+              change="+127 this week"
+              changeType="positive"
+            />
+            <MetricCard 
+              title="Insights Generated" 
+              value="Real-time" 
+              icon={<Zap size={24} />} 
+              animation="pulse" 
+              change="99.8% uptime"
+              changeType="positive"
+            />
+            <MetricCard 
+              title="Data Freshness" 
+              value="Live" 
+              icon={<CheckCircle size={24} />} 
+              animation="pulse" 
+              change="< 5 min delay"
+              changeType="positive"
+            />
           </motion.div>
           <TopicVelocityChartFullV0 
             onNotablePerformerChange={setNotablePerformer}

@@ -6,6 +6,7 @@ import { motion, animate } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { useEffect, useState } from "react"
 import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts"
+import { TrendingUp, TrendingDown } from "lucide-react"
 import type { MetricCardProps } from "@/lib/types"
 
 const AnimatedNumber = ({ value }: { value: number }) => {
@@ -52,52 +53,136 @@ const TrendingSparkline = ({ data, color, yDomain }: { data?: any[], color?: str
   )
 }
 
-export function MetricCard({ title, value, icon, animation = "none", unit, sparklineData, sparklineColor, sparklineYDomain }: MetricCardProps & { sparklineData?: any[], sparklineColor?: string, sparklineYDomain?: [number | 'auto' | 'dataMin' | 'dataMax', number | 'auto' | 'dataMin' | 'dataMax'] }) {
+export function MetricCard({ 
+  title, 
+  value, 
+  icon, 
+  animation = "none", 
+  unit, 
+  sparklineData, 
+  sparklineColor, 
+  sparklineYDomain,
+  change,
+  changeType = "positive"
+}: MetricCardProps & { 
+  sparklineData?: any[], 
+  sparklineColor?: string, 
+  sparklineYDomain?: [number | 'auto' | 'dataMin' | 'dataMax', number | 'auto' | 'dataMin' | 'dataMax'],
+  change?: string,
+  changeType?: "positive" | "negative"
+}) {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   }
 
   const showSparkline = title === "Trending Now" && sparklineData
-
-  // Determine icon styles based on title
-  const getIconStyles = () => {
-    if (title === "Trending Now") {
-      return {
-        iconStyle: { color: sparklineColor || "#7C3AED" },
-        bgStyle: { backgroundColor: sparklineColor ? `${sparklineColor}1A` : "#7C3AED1A" }, // 10% opacity
-      }
-    }
-    return {
-      iconStyle: { color: "#3B82F6" },
-      bgStyle: { backgroundColor: "#3B82F61A" }, // 10% opacity
-    }
-  }
-
-  const { iconStyle, bgStyle } = getIconStyles()
+  const isTrendingNow = title === "Trending Now"
 
   return (
     <motion.div
       variants={cardVariants}
-      className="intel-card intel-card-clickable flex items-center space-x-4"
+      className={`relative overflow-hidden ${isTrendingNow ? 'ring-2 ring-[#8B5CF6]' : ''}`}
+      style={{
+        backgroundColor: "#1A1A1C",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)",
+        borderRadius: "16px",
+        padding: "20px",
+        minHeight: "120px",
+        background: isTrendingNow 
+          ? "linear-gradient(135deg, #1A1A1C 0%, rgba(139, 92, 246, 0.05) 100%)" 
+          : "#1A1A1C"
+      }}
     >
-      <div className="p-2 rounded-md" style={{ ...iconStyle, ...bgStyle }}>{icon}</div>
-      <div className="flex-1">
-        <p className="text-sm intel-text-secondary">{title}</p>
-        <div className="text-xl font-bold font-mono flex items-center">
-          {animation === "count-up" && typeof value === "number" ? <AnimatedNumber value={value} /> : value}
-          {animation === "pulse" && (
-            <span
-              className="ml-2 w-3 h-3 rounded-full bg-brand-emerald animate-pulse-glow"
+      <div className="flex justify-between items-start">
+        <div className="flex flex-col flex-1">
+          {/* Icon Container */}
+          <div 
+            className={`flex items-center justify-center mb-3 ${isTrendingNow ? 'animate-pulse' : ''}`}
+            style={{
+              width: "48px",
+              height: "48px",
+              backgroundColor: "rgba(139, 92, 246, 0.1)",
+              borderRadius: "12px"
+            }}
+          >
+            <div style={{ color: "var(--accent-purple, #8B5CF6)", fontSize: "24px" }}>
+              {icon}
+            </div>
+          </div>
+          
+          {/* Text Content */}
+          <div>
+            <p 
               style={{
-                boxShadow: "0 0 8px rgba(16, 185, 129, 0.6), 0 0 16px rgba(16, 185, 129, 0.4)",
+                fontSize: "13px",
+                color: "#9CA3AF",
+                fontWeight: 500,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                marginBottom: "8px"
               }}
-            />
-          )}
-          {unit && <span className="text-sm font-sans ml-1 intel-text-secondary">{unit}</span>}
+            >
+              {title}
+            </p>
+            <div 
+              style={{
+                fontSize: "28px",
+                color: "white",
+                fontWeight: 700,
+                lineHeight: 1
+              }}
+            >
+              {animation === "count-up" && typeof value === "number" ? (
+                <AnimatedNumber value={value} />
+              ) : (
+                value
+              )}
+              {unit && (
+                <span 
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: 400,
+                    marginLeft: "4px",
+                    color: "#9CA3AF"
+                  }}
+                >
+                  {unit}
+                </span>
+              )}
+            </div>
+            
+            {/* Change Indicator */}
+            {change && (
+              <div 
+                className="flex items-center gap-1"
+                style={{
+                  fontSize: "14px",
+                  marginTop: "8px",
+                  color: changeType === "positive" ? "#10B981" : "#EF4444"
+                }}
+              >
+                {changeType === "positive" ? (
+                  <TrendingUp size={16} />
+                ) : (
+                  <TrendingDown size={16} />
+                )}
+                <span>{change}</span>
+              </div>
+            )}
+          </div>
         </div>
+        
+        {/* Sparkline for trending */}
+        {showSparkline && (
+          <TrendingSparkline 
+            data={sparklineData} 
+            color={sparklineColor} 
+            yDomain={sparklineYDomain} 
+          />
+        )}
       </div>
-      {showSparkline && <TrendingSparkline data={sparklineData} color={sparklineColor} yDomain={sparklineYDomain} />}
     </motion.div>
   )
 }
