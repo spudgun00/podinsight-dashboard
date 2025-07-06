@@ -2,6 +2,8 @@
 
 import React from "react"
 import { useState, useMemo } from "react"
+import { MessageSquare } from "lucide-react"
+import { SectionHeader } from "@/components/dashboard/section-header"
 
 interface SentimentData {
   topic: string
@@ -146,34 +148,33 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
 
       <div className="relative z-10">
         {/* Header with Time Range Filter */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-xl font-semibold text-white mb-1">Sentiment Analysis Heatmap</h3>
-            <p className="text-sm" style={{ color: "#9CA3AF" }}>AI-powered sentiment tracking across topics and time</p>
-          </div>
-
-          {/* Time Range Selector */}
-          <div className="flex items-center gap-1">
-            {(["1M", "3M", "6M", "1Y", "All"] as const).map((range) => (
-              <button
-                key={range}
-                onClick={() => setSelectedTimeRange(range)}
-                className="transition-all duration-200"
-                style={{
-                  background: selectedTimeRange === range ? "rgba(139, 92, 246, 0.2)" : "transparent",
-                  border: selectedTimeRange === range ? "1px solid #8B5CF6" : "1px solid rgba(255, 255, 255, 0.06)",
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  color: selectedTimeRange === range ? "#FFFFFF" : "#9CA3AF",
-                  fontWeight: selectedTimeRange === range ? 500 : 400
-                }}
-              >
-                {range}
-              </button>
-            ))}
-          </div>
-        </div>
+        <SectionHeader
+          icon={<MessageSquare size={24} className="text-white" />}
+          title="Sentiment Analysis Heatmap"
+          subtitle="AI-powered sentiment tracking across topics and time"
+          action={
+            <div className="flex items-center gap-1">
+              {(["1M", "3M", "6M", "1Y", "All"] as const).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setSelectedTimeRange(range)}
+                  className="transition-all duration-200"
+                  style={{
+                    background: selectedTimeRange === range ? "rgba(139, 92, 246, 0.2)" : "transparent",
+                    border: selectedTimeRange === range ? "1px solid #8B5CF6" : "1px solid rgba(255, 255, 255, 0.06)",
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    color: selectedTimeRange === range ? "#FFFFFF" : "#9CA3AF",
+                    fontWeight: selectedTimeRange === range ? 500 : 400
+                  }}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
+          }
+        />
 
         {/* Heatmap Container */}
         <div className="relative overflow-x-auto">

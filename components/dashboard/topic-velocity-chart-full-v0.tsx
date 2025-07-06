@@ -17,9 +17,10 @@ import {
 import { fetchTopicVelocity, fetchTopicSignals } from "@/lib/api"
 import { DEFAULT_TOPICS, TOPIC_COLORS } from "@/lib/utils"
 import { cn } from "@/lib/utils"
-import { Download, ImageIcon, FileText, Link } from "lucide-react"
+import { Download, ImageIcon, FileText, Link, TrendingUp } from "lucide-react"
 import { FloatingInsightCard } from "./floating-insight-card"
 import { generateValueSignals } from "@/lib/generate-value-signals"
+import { SectionHeader } from "@/components/dashboard/section-header"
 
 interface TopicVelocityChartProps {
   onNotablePerformerChange?: (performer: { topic: string; change: string; arrow: string; positive: boolean; data: any[]; color: string; yDomain?: [number, number] }) => void
@@ -979,43 +980,44 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
     <div>
       <style dangerouslySetInnerHTML={{ __html: customStyles }} />
       
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-2xl font-bold">Topic Velocity Tracker</h2>
-          <p className="text-gray-400">Mentions per week across tracked podcasts</p>
-        </div>
-        <div className="flex items-center gap-4">
-          {/* Top Performer Badge */}
-          <div className="text-right">
-            <p className="text-xs text-gray-400">Notable Performer</p>
-            <div className="flex items-baseline gap-1">
+      <SectionHeader
+        icon={<TrendingUp size={24} className="text-white" />}
+        title="Topic Velocity Tracker"
+        subtitle="Mentions per week across tracked podcasts"
+        action={
+          <div className="flex items-center gap-4">
+            {/* Top Performer Badge */}
+            <div className="text-right">
+              <p className="text-xs text-gray-400">Notable Performer</p>
               <div className="flex items-baseline gap-1">
-                <p className="text-sm font-semibold" style={{ color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] }}>
-                  {notablePerformer.topic}
-                </p>
-                <p className={cn(
-                  "text-sm font-bold",
-                  notablePerformer.positive ? "text-green-400" : "text-red-400"
-                )}>
-                  {notablePerformer.arrow}{notablePerformer.change}%
-                </p>
-                <p className="text-xs font-medium text-white/60">
-                  ({viewMode === "quarters" ? selectedQuarter : selectedTimeRange})
-                </p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-sm font-semibold" style={{ color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] }}>
+                    {notablePerformer.topic}
+                  </p>
+                  <p className={cn(
+                    "text-sm font-bold",
+                    notablePerformer.positive ? "text-green-400" : "text-red-400"
+                  )}>
+                    {notablePerformer.arrow}{notablePerformer.change}%
+                  </p>
+                  <p className="text-xs font-medium text-white/60">
+                    ({viewMode === "quarters" ? selectedQuarter : selectedTimeRange})
+                  </p>
+                </div>
+                {velocityBadge && (
+                  <span className={cn(
+                    "text-xs px-2 py-1 rounded-full",
+                    velocityBadge.bgColor,
+                    velocityBadge.textColor
+                  )}>
+                    {velocityBadge.text} {velocityBadge.emoji}
+                  </span>
+                )}
               </div>
-              {velocityBadge && (
-                <span className={cn(
-                  "text-xs px-2 py-1 rounded-full",
-                  velocityBadge.bgColor,
-                  velocityBadge.textColor
-                )}>
-                  {velocityBadge.text} {velocityBadge.emoji}
-                </span>
-              )}
             </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
 
       <div

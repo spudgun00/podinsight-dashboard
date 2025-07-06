@@ -1,9 +1,10 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Headphones, MoreHorizontal, Mail, Link, Clock, ChevronDown } from "lucide-react"
+import { Headphones, MoreHorizontal, Mail, Link, Clock, ChevronDown, BrainCircuit } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { newMockEpisodes, type NewEpisode } from "@/lib/new-mock-episode-data"
+import { SectionHeader } from "@/components/dashboard/section-header"
 
 const signalMeta = {
   INVESTABLE_SIGNAL: {
@@ -240,24 +241,19 @@ export function EpisodeIntelligenceCards({
           />
         </svg>
       </div>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-purple to-brand-pink flex items-center justify-center">
-            {/* Abstract shape or icon */}
-            <div className="w-6 h-6 bg-white/20 rounded-md transform rotate-45" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-white">Episode Intelligence</h2>
-            <p className="text-intel-gray">Personalized signals from today's top episodes</p>
-          </div>
-        </div>
-        <button
-          onClick={onViewAllEpisodesClick}
-          className="px-4 py-2 text-sm font-semibold text-white bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-        >
-          View All Episodes
-        </button>
-      </div>
+      <SectionHeader
+        icon={<BrainCircuit size={24} className="text-white" />}
+        title="Episode Intelligence"
+        subtitle="Personalized signals from today's top episodes"
+        action={
+          <button
+            onClick={onViewAllEpisodesClick}
+            className="px-4 py-2 text-sm font-semibold text-white bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            View All Episodes
+          </button>
+        }
+      />
 
       <div className="space-y-4">
         <motion.div 
