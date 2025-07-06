@@ -8,21 +8,24 @@ import { newMockEpisodes, type NewEpisode } from "@/lib/new-mock-episode-data"
 const signalMeta = {
   INVESTABLE_SIGNAL: {
     borderColor: "border-brand-green",
-    accentColor: "#10B981",
+    accentColor: "#34D399",
+    backgroundColor: "rgba(52, 211, 153, 0.1)",
     icon: "💰",
     label: "INVESTABLE SIGNAL",
     textColor: "text-brand-green",
   },
   COMPETITIVE_INTEL: {
     borderColor: "border-brand-red",
-    accentColor: "#EF4444",
+    accentColor: "#F87171",
+    backgroundColor: "rgba(248, 113, 113, 0.1)",
     icon: "⚔️",
     label: "COMPETITIVE INTEL",
     textColor: "text-brand-red",
   },
   PORTFOLIO_MENTION: {
     borderColor: "border-brand-purple",
-    accentColor: "#8B5CF6",
+    accentColor: "#A78BFA",
+    backgroundColor: "rgba(167, 139, 250, 0.1)",
     icon: "📊",
     label: "PORTFOLIO MENTION",
     textColor: "text-brand-purple",
@@ -54,10 +57,17 @@ const NewEpisodeCard = ({
 
   return (
     <motion.div
-      whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(139, 92, 246, 0.2)" }}
+      whileHover={{ 
+        y: -5, 
+        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.6)" 
+      }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="bg-card-dark border border-white/5 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg shadow-black/30"
-      style={{ backgroundColor: "#0F0F11" }}
+      className="rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden"
+      style={{ 
+        backgroundColor: "#1A1A1C",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)"
+      }}
     >
       {/* Left accent border */}
       <div 
@@ -106,7 +116,16 @@ const NewEpisodeCard = ({
 
       <div className="flex items-center gap-2">
         <span className="text-lg">{meta.icon}</span>
-        <span className={`text-sm font-bold ${meta.textColor}`}>{meta.label}</span>
+        <span 
+          className={`text-sm font-bold ${meta.textColor}`}
+          style={{
+            backgroundColor: meta.backgroundColor,
+            padding: "4px 12px",
+            borderRadius: "6px"
+          }}
+        >
+          {meta.label}
+        </span>
       </div>
 
       <ul className="space-y-2">
