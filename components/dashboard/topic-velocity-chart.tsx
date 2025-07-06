@@ -24,6 +24,29 @@ interface TopicVelocityChartProps {
   selectedTimeRange?: "1M" | "3M" | "6M"
 }
 
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#1A1A1C] border border-[rgba(139,92,246,0.5)] rounded-lg p-3 shadow-[0_4px_16px_rgba(0,0,0,0.8)]">
+        <p className="text-sm font-medium text-white mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => {
+          const isComparison = entry.dataKey.includes("(Last Quarter)")
+          return (
+            <div key={index} className="flex items-center justify-between gap-4 text-xs">
+              <span className="text-[#9CA3AF]">{entry.name}:</span>
+              <span className="font-medium" style={{ color: entry.color }}>
+                {entry.value} mentions
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+  return null
+}
+
 // AI-generated insights that cycle through
 const aiInsights = [
   "AI Agents mentions up 183% this quarter, correlating with GPT-4 launch surge",
@@ -35,6 +58,16 @@ const aiInsights = [
   "Weekly volatility decreased 23%, suggesting more mature discourse around emerging tech",
   "78% of AI Agent discussions originate from SF-based podcasts vs 34% for other topics",
 ]
+
+// Helper function to get glow filter based on topic color
+const getGlowFilter = (topic: string) => {
+  const color = topicColors[topic as keyof typeof topicColors]
+  if (color === "#7C3AED") return "url(#glow-purple)"
+  if (color === "#3B82F6") return "url(#glow-blue)"
+  if (color === "#10B981") return "url(#glow-green)"
+  if (color === "#F59E0B") return "url(#glow-orange)"
+  return ""
+}
 
 // Helper function to calculate velocity badge
 const getVelocityBadge = (topicName: string) => {
@@ -85,6 +118,20 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
   const [showComparison, setShowComparison] = useState(false)
   const [currentInsightIndex, setCurrentInsightIndex] = useState(0)
   const [animationsComplete, setAnimationsComplete] = useState(false)
+  const [activeTimeRange, setActiveTimeRange] = useState("3M")
+  
+  // Calculate the trending topic (highest growth)
+  const trendingTopic = topics.reduce((maxTopic, topic) => {
+    const lastWeek = Number(topicVelocityData[topicVelocityData.length - 1][topic])
+    const prevWeek = Number(topicVelocityData[topicVelocityData.length - 2][topic])
+    const growth = ((lastWeek - prevWeek) / prevWeek) * 100
+    
+    const maxLastWeek = Number(topicVelocityData[topicVelocityData.length - 1][maxTopic])
+    const maxPrevWeek = Number(topicVelocityData[topicVelocityData.length - 2][maxTopic])
+    const maxGrowth = ((maxLastWeek - maxPrevWeek) / maxPrevWeek) * 100
+    
+    return growth > maxGrowth ? topic : maxTopic
+  }, topics[0])
 
   // Cycle through insights every 10 seconds
   useEffect(() => {
@@ -111,6 +158,7 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
   const customLegendFormatter = (value: string) => {
     const isHidden = hiddenTopics.includes(value)
     const isHovered = hoveredLine === value
+    const isTrending = value === trendingTopic
 
     // Calculate trend percentage
     const lastWeek = Number(topicVelocityData[11][value as keyof TopicData])
@@ -124,11 +172,24 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
         style={{
           color: isHidden ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.8)",
           textDecoration: isHidden ? "line-through" : "none",
-          fontWeight: isHovered ? "bold" : "normal",
+          fontWeight: isHovered || isTrending ? "bold" : "normal",
           cursor: "pointer",
           transition: "all 0.3s ease",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
         }}
       >
+        <span
+          style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            backgroundColor: topicColors[value as keyof typeof topicColors],
+            boxShadow: isTrending ? `0 0 8px ${topicColors[value as keyof typeof topicColors]}` : "none",
+            transition: "box-shadow 0.3s ease",
+          }}
+        />
         {value}{" "}
         <span className={colorClass}>
           {arrow}
@@ -142,24 +203,28 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold">Topic Velocity Tracker</h2>
-          <p className="text-gray-400">Mentions per week across tracked podcasts</p>
+          <h2 className="text-xl text-white font-semibold">Topic Velocity Tracker</h2>
+          <p className="text-sm text-[#9CA3AF]">Mentions per week across tracked podcasts</p>
         </div>
-        <div className="flex items-center gap-4">
-          {/* Top Performer Badge */}
-          <div className="text-right">
-            <p className="text-xs text-gray-400">Top Performer</p>
-            <div className="flex items-baseline gap-1">
-              <div className="flex items-baseline gap-1">
-                <p className="text-lg font-semibold text-[#7C3AED]">AI Agents</p>
-                <p className="text-2xl font-bold text-[#7C3AED]">↑32%</p>
-                <p className="text-sm font-medium text-white/60">(3mo)</p>
-              </div>
-              <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
-                3-week momentum streak 🔥
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          {/* Time Range Buttons */}
+          {["7D", "1M", "3M", "1Y"].map((range) => (
+            <button
+              key={range}
+              onClick={() => setActiveTimeRange(range)}
+              className={`
+                px-3 py-1.5 text-[13px] font-medium rounded-md
+                transition-all duration-200
+                ${
+                  activeTimeRange === range
+                    ? "bg-[rgba(139,92,246,0.2)] border border-[#8B5CF6] text-white"
+                    : "bg-transparent border border-[rgba(255,255,255,0.06)] text-[#9CA3AF] hover:text-white hover:border-[rgba(255,255,255,0.1)]"
+                }
+              `}
+            >
+              {range}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -191,20 +256,20 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
       </div>
 
       <div
-        className={`bg-black/30 backdrop-blur-2xl border rounded-xl shadow-2xl shadow-purple-500/20 ring-1 ring-white/10 p-4 md:p-6 relative overflow-hidden group transition-all duration-300 ${
-          isChartHovered
-            ? "border-gradient-to-r from-brand-purple/50 via-brand-blue/50 to-brand-emerald/50 shadow-purple-500/30"
-            : "border-white/10"
-        }`}
+        className={`
+          bg-[#0A0A0B]/80 backdrop-blur-xl
+          border border-white/[0.06]
+          rounded-xl
+          p-6
+          shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_0_0_1px_rgba(255,255,255,0.02)]
+          relative overflow-hidden
+          transition-all duration-300
+          ${isChartHovered ? "border-white/[0.08]" : ""}
+        `}
         onMouseEnter={() => setIsChartHovered(true)}
         onMouseLeave={() => setIsChartHovered(false)}
         style={{
-          background: isChartHovered
-            ? "linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(139,92,246,0.05) 50%, rgba(0,0,0,0.4) 100%), rgba(0,0,0,0.3)"
-            : undefined,
-          boxShadow: isChartHovered
-            ? "0 25px 50px -12px rgba(139, 92, 246, 0.25), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.1)"
-            : "0 25px 50px -12px rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.05)",
+          height: "400px"
         }}
       >
         {/* Compare periods button - positioned in top-right corner */}
@@ -218,23 +283,10 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
           ⟳
         </button>
 
-        {/* Floating background orbs - much more subtle */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-brand-purple/[0.03] rounded-full blur-2xl animate-float-slow"></div>
-          <div className="absolute top-3/4 right-1/4 w-32 h-32 bg-brand-blue/[0.03] rounded-full blur-xl animate-float-medium"></div>
-          <div className="absolute bottom-1/3 left-1/2 w-28 h-28 bg-brand-emerald/[0.03] rounded-full blur-lg animate-float-fast"></div>
-          <div className="absolute top-1/2 right-1/3 w-36 h-36 bg-brand-coral/[0.03] rounded-full blur-xl animate-float-reverse"></div>
-          <div className="absolute top-1/6 right-1/6 w-24 h-24 bg-brand-purple/[0.03] rounded-full blur-lg animate-float-medium"></div>
-          <div className="absolute bottom-1/6 left-1/6 w-20 h-20 bg-brand-blue/[0.03] rounded-full blur-md animate-float-fast"></div>
-        </div>
-
-        {/* Enhanced noise texture overlay */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9Im5vaXNlIj4KICAgICAgPGZlVHVyYnVsZW5jZSBiYXNlRnJlcXVlbmN5PSIwLjkiIG51bU9jdGF2ZXM9IjQiIHNlZWQ9IjIiLz4KICAgICAgPGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNub2lzZSkiIG9wYWNpdHk9IjAuNCIvPgo8L3N2Zz4K')] bg-repeat"></div>
-        <div className="absolute inset-0 opacity-[0.01] pointer-events-none bg-gradient-to-br from-brand-purple/5 via-transparent to-brand-blue/5"></div>
-        <div className="relative z-10">
-          <div className="h-[400px] w-full">
+        <div className="relative z-10 h-full">
+          <div className="h-full w-full">
             {isLoading ? (
-              <div className="h-[400px] animate-pulse">
+              <div className="h-full animate-pulse">
                 <div className="h-full bg-gray-800/50 rounded-lg flex items-center justify-center">
                   <p className="text-gray-400">Analyzing podcast intelligence...</p>
                 </div>
@@ -276,18 +328,49 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
                       <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.3} />
                       <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.05} />
                     </linearGradient>
+                    {/* Glow filters for lines */}
+                    <filter id="glow-purple">
+                      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                    <filter id="glow-blue">
+                      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                    <filter id="glow-green">
+                      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                    <filter id="glow-orange">
+                      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
                   </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="rgba(255, 255, 255, 0.05)"
+                    stroke="rgba(255, 255, 255, 0.03)"
                     opacity={1}
                     horizontal={true}
                     vertical={false}
                   />
                   <XAxis
                     dataKey="week"
-                    stroke="#9CA3AF"
-                    tick={{ fill: "#9CA3AF", fontSize: 11 }}
+                    stroke="rgba(255, 255, 255, 0.06)"
+                    tick={{ fill: "#6B7280", fontSize: 12 }}
+                    tickLine={{ stroke: "rgba(255, 255, 255, 0.06)" }}
+                    axisLine={{ stroke: "rgba(255, 255, 255, 0.06)" }}
                     label={{
                       value: "Week of 2025",
                       position: "insideBottom",
@@ -296,8 +379,10 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
                     }}
                   />
                   <YAxis
-                    stroke="#9CA3AF"
-                    tick={{ fill: "#9CA3AF", fontSize: 11 }}
+                    stroke="rgba(255, 255, 255, 0.06)"
+                    tick={{ fill: "#6B7280", fontSize: 12 }}
+                    tickLine={{ stroke: "rgba(255, 255, 255, 0.06)" }}
+                    axisLine={{ stroke: "rgba(255, 255, 255, 0.06)" }}
                     label={{
                       value: "Weekly Mentions",
                       angle: -90,
@@ -306,22 +391,8 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
                     }}
                   />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "rgba(0, 0, 0, 0.8)",
-                      border: "1px solid rgba(139, 92, 246, 0.3)",
-                      borderRadius: "8px",
-                      backdropFilter: "blur(10px)",
-                      padding: "12px",
-                    }}
-                    labelStyle={{ color: "#9CA3AF" }}
-                    labelFormatter={(label) => label.replace(/^W(\d+)$/, "Week $1")}
-                    formatter={(value, name) => {
-                      const isComparison = name.toString().includes("(Last Quarter)")
-                      return [
-                        `${value} mentions${isComparison ? " (Last Quarter)" : ""}`,
-                        name.toString().replace(" (Last Quarter)", ""),
-                      ]
-                    }}
+                    content={<CustomTooltip />}
+                    cursor={{ stroke: "rgba(255, 255, 255, 0.1)", strokeWidth: 1 }}
                   />
                   <Legend
                     wrapperStyle={{ paddingTop: "20px" }}
@@ -437,6 +508,7 @@ export function TopicVelocityChart({ isLoading = false, selectedTimeRange = "3M"
                       style={{
                         transition: "stroke-width 200ms ease, stroke-opacity 200ms ease",
                         cursor: "pointer",
+                        filter: topic === trendingTopic ? getGlowFilter(topic) : undefined,
                       }}
                     />
                   ))}
