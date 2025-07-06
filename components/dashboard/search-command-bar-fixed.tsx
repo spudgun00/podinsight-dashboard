@@ -539,32 +539,32 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
 
   const CommandBarContent = (
     <div className="relative" ref={containerRef}>
-      {/* Search Input */}
-      <div
-        className={`relative intel-bg-card transition-all duration-300 ${
-          shouldShowResults && mode === "inline" ? "rounded-t-xl" : "rounded-xl"
-        } ${mode === "modal" ? "shadow-2xl" : ""}`}
-        style={{
-          height: "56px",
-          border: isFocused ? "1px solid var(--accent-purple)" : "1px solid var(--border-subtle)",
-          boxShadow: isFocused
-            ? "0 0 0 1px var(--accent-purple), 0 4px 12px var(--accent-purple-glow)"
-            : "0 2px 8px rgba(0, 0, 0, 0.4)",
-        }}
-      >
-        <div className="flex items-center justify-between h-full px-4">
-          <div className="flex items-center flex-1">
-            <div className="flex-shrink-0 mr-3">
+      {/* Search Input Container */}
+      <div className="relative w-full">
+        <div
+          className="relative transition-all duration-300"
+          style={{
+            height: "48px",
+            background: "#1A1A1C",
+            border: isFocused ? "1px solid var(--accent-purple)" : "1px solid rgba(255, 255, 255, 0.06)",
+            borderRadius: shouldShowResults && mode === "inline" ? "12px 12px 0 0" : "12px",
+            boxShadow: isFocused ? "0 0 0 3px var(--accent-purple-glow)" : "none",
+          }}
+        >
+          <div className="relative h-full">
+            {/* Search Icon */}
+            <div className="absolute left-4 top-1/2 -translate-y-1/2">
               {isLoading ? (
-                <Loader2 size={20} className="text-purple-400 animate-spin" data-testid="loading-spinner" />
+                <Loader2 size={20} className="animate-spin" style={{ color: "#6B7280" }} data-testid="loading-spinner" />
               ) : (
                 <Search
                   size={20}
-                  className={`transition-colors duration-200 ${isFocused ? "text-gray-300" : "text-gray-400"}`}
+                  style={{ color: "#6B7280" }}
                 />
               )}
             </div>
 
+            {/* Input */}
             <input
               ref={inputRef}
               type="text"
@@ -574,16 +574,29 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
               onBlur={handleInputBlur}
               onKeyDown={handleKeyDown}
               placeholder="Ask anything about podcast trends, topics, or insights..."
-              className="flex-1 bg-transparent text-base intel-text-primary placeholder-gray-400 border-none outline-none"
+              className="w-full h-full bg-transparent text-[15px] text-white border-none outline-none"
+              style={{
+                paddingLeft: "48px",
+                paddingRight: "80px",
+                color: "#FFFFFF",
+              }}
               autoComplete="off"
               spellCheck="false"
             />
-          </div>
 
-          <div className="flex-shrink-0">
-            <kbd className="bg-gray-800/80 px-2.5 py-1 rounded-md text-sm font-medium text-gray-400 border border-gray-700/50">
-              {isMac ? "⌘K" : "Ctrl+K"}
-            </kbd>
+            {/* Command Key Hint */}
+            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+              <kbd 
+                style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  fontSize: "12px",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  color: "#6B7280",
+                }}>
+                {isMac ? "⌘K" : "Ctrl+K"}
+              </kbd>
+            </div>
           </div>
         </div>
       </div>
@@ -607,15 +620,13 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
             }}
             className={`${
               mode === "modal" ? "relative" : "absolute top-full left-0 right-0"
-            } bg-gray-900 border border-white/10 ${
-              mode === "modal" ? "rounded-b-xl border-t-0" : "rounded-b-xl"
-            } shadow-2xl z-50 overflow-hidden`}
+            } z-50 overflow-hidden`}
             style={{
-              background:
-                "linear-gradient(135deg, rgb(17, 24, 39), rgb(17, 24, 39)) padding-box, linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1)) border-box",
-              border: "1px solid transparent",
-              borderTop: mode === "modal" ? "1px solid rgba(255,255,255,0.05)" : "none",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05)",
+              background: "#1A1A1C",
+              border: "1px solid rgba(255, 255, 255, 0.06)",
+              borderRadius: mode === "modal" ? "0 0 12px 12px" : "0 0 12px 12px",
+              borderTop: "none",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.6)",
             }}
             onMouseDown={(e) => e.preventDefault()}
           >
@@ -813,7 +824,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
   return (
     <>
       <audio ref={audioRef} />
-      <div className={`my-6 ${className}`}>
+      <div className={className}>
         {CommandBarContent}
       </div>
 
@@ -838,7 +849,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
                 stiffness: 300,
                 damping: 30,
               }}
-              className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-[calc(100%-48px)] max-w-3xl max-h-[calc(100vh-160px)]"
+              className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-[calc(100%-48px)] max-w-5xl max-h-[calc(100vh-160px)]"
             >
               <div className="relative">
                 {CommandBarContent}

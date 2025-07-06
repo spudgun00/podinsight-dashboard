@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Settings, Headphones, MoreHorizontal, Mail, Link, Clock, ChevronDown } from "lucide-react"
+import { Headphones, MoreHorizontal, Mail, Link, Clock, ChevronDown } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { newMockEpisodes, type NewEpisode } from "@/lib/new-mock-episode-data"
 
@@ -248,20 +248,15 @@ export function EpisodeIntelligenceCards({
           </div>
           <div>
             <h2 className="text-3xl font-bold text-white">Episode Intelligence</h2>
-            <p className="text-intel-gray">6 new signals from today's top episodes</p>
+            <p className="text-intel-gray">Personalized signals from today's top episodes</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onViewAllEpisodesClick}
-            className="px-4 py-2 text-sm font-semibold text-white bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            View All Episodes
-          </button>
-          <button className="p-2 text-intel-gray bg-white/5 rounded-lg hover:bg-white/10 hover:text-white transition-colors">
-            <Settings size={20} />
-          </button>
-        </div>
+        <button
+          onClick={onViewAllEpisodesClick}
+          className="px-4 py-2 text-sm font-semibold text-white bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+        >
+          View All Episodes
+        </button>
       </div>
 
       <div className="space-y-3 md:space-y-5">

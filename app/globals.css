@@ -89,3 +89,9 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
 }
+
+/* Custom placeholder styling for search input */
+input::placeholder {
+  color: #6B7280;
+  opacity: 1;
+}
