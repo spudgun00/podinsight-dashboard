@@ -54,9 +54,6 @@ export default function DashboardPage() {
     change: string
     arrow: string
     positive: boolean
-    data: any[]
-    color: string
-    yDomain?: [number, number]
   } | null>(null)
   const [sentimentData, setSentimentData] = useState<SentimentData[]>([])
   const [isLoadingSentiment, setIsLoadingSentiment] = useState(true)
@@ -129,7 +126,7 @@ export default function DashboardPage() {
           />
 
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 mt-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 mt-8 justify-items-center lg:justify-items-start"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -137,25 +134,22 @@ export default function DashboardPage() {
             <MetricCard 
               title="Trending Now" 
               value={notablePerformer?.topic || "Loading..."} 
-              icon={<TrendingUp size={24} />} 
-              sparklineData={notablePerformer?.data}
-              sparklineColor={notablePerformer?.color}
-              sparklineYDomain={notablePerformer?.yDomain}
+              icon={<TrendingUp size={20} />} 
               change={notablePerformer?.change}
               changeType={notablePerformer?.positive ? "positive" : "negative"}
             />
             <MetricCard 
               title="Episodes Analyzed" 
               value={1171} 
-              icon={<BarChart2 size={24} />} 
+              icon={<BarChart2 size={20} />} 
               animation="count-up" 
               change="+127 this week"
               changeType="positive"
             />
             <MetricCard 
               title="Insights Generated" 
-              value="Real-time" 
-              icon={<Zap size={24} />} 
+              value="Realtime" 
+              icon={<Zap size={20} />} 
               animation="pulse" 
               change="99.8% uptime"
               changeType="positive"
@@ -163,7 +157,7 @@ export default function DashboardPage() {
             <MetricCard 
               title="Data Freshness" 
               value="Live" 
-              icon={<CheckCircle size={24} />} 
+              icon={<CheckCircle size={20} />} 
               animation="pulse" 
               change="< 5 min delay"
               changeType="positive"
@@ -178,7 +172,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-6"
+            className="mt-8"
           >
             <SentimentHeatmap 
               data={sentimentData}
@@ -189,8 +183,14 @@ export default function DashboardPage() {
             />
           </motion.div>
 
-          <footer className="mt-8 text-center text-sm intel-text-secondary">
-            <p>Last updated: {lastUpdated} seconds ago. Tracking 5 topics across 29 podcasts.</p>
+          <footer className="mt-12 text-center">
+            <p className="flex items-center justify-center gap-2" style={{ color: "#6B7280", fontSize: "13px" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Last updated: {lastUpdated} seconds ago. Tracking 5 topics across 29 podcasts.</span>
+            </p>
           </footer>
         </div>
       </main>

@@ -18,6 +18,8 @@ import { fetchTopicVelocity, fetchTopicSignals } from "@/lib/api"
 import { DEFAULT_TOPICS, TOPIC_COLORS } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { Download, ImageIcon, FileText, Link } from "lucide-react"
+import { FloatingInsightCard } from "./floating-insight-card"
+import { generateValueSignals } from "@/lib/generate-value-signals"
 
 interface TopicVelocityChartProps {
   onNotablePerformerChange?: (performer: { topic: string; change: string; arrow: string; positive: boolean; data: any[]; color: string; yDomain?: [number, number] }) => void
@@ -178,6 +180,8 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
   const [currentInsightIndex, setCurrentInsightIndex] = useState(0)
   const [animationsComplete, setAnimationsComplete] = useState(false)
   const [insights, setInsights] = useState<string[]>([])
+  const [valueSignals, setValueSignals] = useState<any[]>([])
+  const [showInsightCard, setShowInsightCard] = useState(true)
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const [statistics, setStatistics] = useState({
@@ -668,7 +672,11 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         })
         setPreviousData(prevQuarterData)
         
-        // Fetch insights
+        // Generate value signals
+        const signals = generateValueSignals(processedData["3M"])
+        setValueSignals(signals)
+        
+        // Fetch insights (keeping for backward compatibility)
         try {
           const signalsResponse = await fetchTopicSignals()
           if (signalsResponse.signal_messages && signalsResponse.signal_messages.length > 0) {
@@ -735,6 +743,10 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         setData(allData[selectedTimeRange])
         setDisplayData(allData[selectedTimeRange])
         setPreviousData([]) // No comparison in time range mode
+        
+        // Regenerate value signals when data changes
+        const signals = generateValueSignals(allData[selectedTimeRange])
+        setValueSignals(signals)
       }
     }
   }, [viewMode, selectedTimeRange, selectedQuarter, allData])
@@ -887,10 +899,7 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
           topic: notablePerformer.topic,
           change: String(notablePerformer.change || 0),
           arrow: notablePerformer.arrow || "→",
-          positive: notablePerformer.positive || false,
-          data: sparklineData,
-          color: TOPIC_COLORS[notablePerformer.topic as keyof typeof TOPIC_COLORS] || "#7C3AED",
-          yDomain
+          positive: notablePerformer.positive || false
         })
       }
     }
@@ -1008,35 +1017,6 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         </div>
       </div>
 
-      {/* AI Insight Banner */}
-      <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 px-4 py-3 rounded-lg mb-4 border border-purple-500/20 flex items-center justify-between">
-        <p className="text-sm transition-all duration-500 ease-in-out flex-1 overflow-hidden whitespace-nowrap text-ellipsis">
-          <span
-            className="text-lg inline-block animate-pulse-lightning mr-1"
-            style={{
-              animation: "pulse-lightning 3s ease-in-out infinite",
-              transformOrigin: "center",
-            }}
-          >
-            ⚡
-          </span>
-          <span className="text-purple-400 font-bold tracking-wide">SIGNAL:</span>{" "}
-          <span className="text-gray-200">{insights[currentInsightIndex] || "Analyzing podcast trends..."}</span>
-        </p>
-        <div className="flex gap-1 ml-4 flex-shrink-0">
-          {(insights.length > 0 ? insights : [""]).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentInsightIndex(index)}
-              className={cn(
-                "w-2 h-2 rounded-full transition-all duration-300 hover:scale-125",
-                index === currentInsightIndex ? "bg-purple-600" : "bg-gray-600 hover:bg-gray-500"
-              )}
-              aria-label={`Go to insight ${index + 1}`}
-            />
-          ))}
-        </div>
-      </div>
 
       <div
         className="intel-card intel-card-clickable relative overflow-hidden"
@@ -1329,6 +1309,19 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
           <p className="text-lg font-semibold">{statistics.trendingTopic || "—"}</p>
         </div>
       </div>
+      
+      {/* Floating Insight Card */}
+      {showInsightCard && valueSignals.length > 0 && (
+        <FloatingInsightCard
+          signals={valueSignals}
+          onViewAnalysis={(signal) => {
+            // Handle view analysis action
+            console.log("View analysis for:", signal)
+            // You can add navigation or modal logic here
+          }}
+          onClose={() => setShowInsightCard(false)}
+        />
+      )}
     </div>
   )
 }

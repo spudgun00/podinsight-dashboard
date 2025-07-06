@@ -5,7 +5,6 @@ import type React from "react"
 import { motion, animate } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { useEffect, useState } from "react"
-import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts"
 import { TrendingUp, TrendingDown } from "lucide-react"
 import type { MetricCardProps } from "@/lib/types"
 
@@ -29,29 +28,6 @@ const AnimatedNumber = ({ value }: { value: number }) => {
   return <span ref={ref}>{currentValue.toLocaleString()}</span>
 }
 
-const TrendingSparkline = ({ data, color, yDomain }: { data?: any[], color?: string, yDomain?: [number | 'auto' | 'dataMin' | 'dataMax', number | 'auto' | 'dataMin' | 'dataMax'] }) => {
-  if (!data || data.length === 0) {
-    return null
-  }
-
-  return (
-    <div className="w-16 h-[50px] ml-2">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <YAxis domain={yDomain || ['dataMin', 'dataMax']} hide />
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke={color || "#7C3AED"}
-            strokeWidth={1.5}
-            dot={false}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  )
-}
 
 export function MetricCard({ 
   title, 
@@ -59,15 +35,9 @@ export function MetricCard({
   icon, 
   animation = "none", 
   unit, 
-  sparklineData, 
-  sparklineColor, 
-  sparklineYDomain,
   change,
   changeType = "positive"
 }: MetricCardProps & { 
-  sparklineData?: any[], 
-  sparklineColor?: string, 
-  sparklineYDomain?: [number | 'auto' | 'dataMin' | 'dataMax', number | 'auto' | 'dataMin' | 'dataMax'],
   change?: string,
   changeType?: "positive" | "negative"
 }) {
@@ -76,59 +46,46 @@ export function MetricCard({
     visible: { opacity: 1, y: 0 },
   }
 
-  const showSparkline = title === "Trending Now" && sparklineData
   const isTrendingNow = title === "Trending Now"
 
   return (
     <motion.div
       variants={cardVariants}
-      className={`relative overflow-hidden ${isTrendingNow ? 'ring-2 ring-[#8B5CF6]' : ''}`}
+      className={`relative overflow-hidden w-full ${isTrendingNow ? 'ring-2 ring-[#8B5CF6]' : ''}`}
       style={{
+        maxWidth: "280px",
         backgroundColor: "#1A1A1C",
         border: "1px solid rgba(255, 255, 255, 0.06)",
         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)",
         borderRadius: "16px",
         padding: "20px",
-        minHeight: "120px",
         background: isTrendingNow 
           ? "linear-gradient(135deg, #1A1A1C 0%, rgba(139, 92, 246, 0.05) 100%)" 
           : "#1A1A1C"
       }}
     >
-      <div className="flex justify-between items-start">
-        <div className="flex flex-col flex-1">
-          {/* Icon Container */}
-          <div 
-            className={`flex items-center justify-center mb-3 ${isTrendingNow ? 'animate-pulse' : ''}`}
-            style={{
-              width: "48px",
-              height: "48px",
-              backgroundColor: "rgba(139, 92, 246, 0.1)",
-              borderRadius: "12px"
-            }}
-          >
-            <div style={{ color: "var(--accent-purple, #8B5CF6)", fontSize: "24px" }}>
-              {icon}
-            </div>
+      <div className="flex items-center gap-3">
+        {/* Icon Container */}
+        <div 
+          className={`flex items-center justify-center flex-shrink-0 ${isTrendingNow ? 'animate-pulse' : ''}`}
+          style={{
+            width: "40px",
+            height: "40px",
+            backgroundColor: "rgba(139, 92, 246, 0.1)",
+            borderRadius: "12px"
+          }}
+        >
+          <div style={{ color: "var(--accent-purple, #8B5CF6)", fontSize: "20px" }}>
+            {icon}
           </div>
-          
-          {/* Text Content */}
-          <div>
-            <p 
-              style={{
-                fontSize: "13px",
-                color: "#9CA3AF",
-                fontWeight: 500,
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                marginBottom: "8px"
-              }}
-            >
-              {title}
-            </p>
+        </div>
+        
+        {/* Text Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2">
             <div 
               style={{
-                fontSize: "28px",
+                fontSize: "24px",
                 color: "white",
                 fontWeight: 700,
                 lineHeight: 1
@@ -142,9 +99,9 @@ export function MetricCard({
               {unit && (
                 <span 
                   style={{
-                    fontSize: "16px",
+                    fontSize: "14px",
                     fontWeight: 400,
-                    marginLeft: "4px",
+                    marginLeft: "2px",
                     color: "#9CA3AF"
                   }}
                 >
@@ -153,35 +110,41 @@ export function MetricCard({
               )}
             </div>
             
-            {/* Change Indicator */}
+            {/* Change Indicator inline with value */}
             {change && (
               <div 
                 className="flex items-center gap-1"
                 style={{
-                  fontSize: "14px",
-                  marginTop: "8px",
+                  fontSize: "12px",
                   color: changeType === "positive" ? "#10B981" : "#EF4444"
                 }}
               >
                 {changeType === "positive" ? (
-                  <TrendingUp size={16} />
+                  <TrendingUp size={14} />
                 ) : (
-                  <TrendingDown size={16} />
+                  <TrendingDown size={14} />
                 )}
-                <span>{change}</span>
+                <span className="whitespace-nowrap">{change}</span>
               </div>
             )}
           </div>
+          
+          <p 
+            style={{
+              fontSize: "12px",
+              color: "#9CA3AF",
+              fontWeight: 500,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              marginTop: "2px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap"
+            }}
+          >
+            {title}
+          </p>
         </div>
-        
-        {/* Sparkline for trending */}
-        {showSparkline && (
-          <TrendingSparkline 
-            data={sparklineData} 
-            color={sparklineColor} 
-            yDomain={sparklineYDomain} 
-          />
-        )}
       </div>
     </motion.div>
   )

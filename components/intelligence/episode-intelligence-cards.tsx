@@ -62,7 +62,7 @@ const NewEpisodeCard = ({
         boxShadow: "0 4px 16px rgba(0, 0, 0, 0.6)" 
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="rounded-2xl p-5 md:p-6 flex flex-col gap-4 relative overflow-hidden"
+      className="rounded-2xl p-4 md:p-6 flex flex-col gap-4 relative overflow-hidden"
       style={{ 
         backgroundColor: "#1A1A1C",
         border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -215,7 +215,7 @@ export function EpisodeIntelligenceCards({
   const hiddenEpisodesCount = newMockEpisodes.length - 3
 
   return (
-    <section className="py-12">
+    <section className="py-8 md:py-12">
       {/* Curved gradient line */}
       <div className="w-full mb-8">
         <svg 
@@ -240,7 +240,7 @@ export function EpisodeIntelligenceCards({
           />
         </svg>
       </div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-purple to-brand-pink flex items-center justify-center">
             {/* Abstract shape or icon */}
@@ -259,9 +259,9 @@ export function EpisodeIntelligenceCards({
         </button>
       </div>
 
-      <div className="space-y-3 md:space-y-5">
+      <div className="space-y-4">
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-4"
           layout
         >
           <AnimatePresence mode="popLayout">
