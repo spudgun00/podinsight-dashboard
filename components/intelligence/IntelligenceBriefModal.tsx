@@ -26,16 +26,20 @@ const podcastBadges: Record<string, string> = {
 const IntelligenceSection = ({
   title,
   icon,
+  borderColor,
+  headerBgColor,
   actionBadge,
   children,
 }: {
   title: React.ReactNode
   icon: React.ReactNode
+  borderColor: string
+  headerBgColor: string
   actionBadge?: React.ReactNode
   children: React.ReactNode
 }) => (
   <div
-    className="rounded-2xl flex flex-col overflow-hidden h-full"
+    className="rounded-2xl flex flex-col overflow-hidden h-full relative"
     style={{ 
       backgroundColor: "#1A1A1C",
       border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -43,10 +47,14 @@ const IntelligenceSection = ({
     }}
   >
     <div 
-      className="p-4 flex items-center" 
+      className="absolute left-0 top-0 bottom-0 w-1"
+      style={{ backgroundColor: borderColor }}
+    />
+    <div 
+      className="p-4 flex items-center relative" 
       style={{ 
         borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
-        backgroundColor: "rgba(255, 255, 255, 0.02)" 
+        backgroundColor: headerBgColor 
       }}
     >
       <div className="flex items-center gap-3 flex-1">
@@ -147,66 +155,67 @@ export function IntelligenceBriefModal({ isOpen, onClose, episode }: Intelligenc
             <main className="flex-grow p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6">
               <IntelligenceSection
                 title={`Investable Signals (${episode.investableSignals.length})`}
-                icon={<Sparkles size={20} className="text-gray-400" />}
+                icon={<Sparkles size={20} className="text-green-400" />}
+                borderColor="#34D399"
+                headerBgColor="rgba(52, 211, 153, 0.1)"
               >
                 <div className="flex-grow">
-                  <ul className="space-y-1">
+                  <ul className="space-y-3">
                     {episode.investableSignals.map((signal, i) => (
-                      <li key={i} className="group flex items-start gap-3 p-2 -mx-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-                        <button className="font-mono text-gray-500 mt-0.5 hover:text-white transition-colors flex items-center gap-1">
-                          [{signal.timestamp}]
-                          <Play size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </button>
-                        <p style={{ color: "#FFFFFF", fontSize: "15px" }}>{signal.text}</p>
+                      <li key={i} className="flex items-start gap-3 text-sm">
+                        <span className="font-mono text-green-400/80 mt-0.5">[{signal.timestamp}]</span>
+                        <p style={{ color: "#94A3B8" }}>{signal.text}</p>
                       </li>
                     ))}
                   </ul>
                 </div>
+                <button className="mt-4 w-full text-sm font-semibold py-2 px-4 rounded-lg bg-green-500/20 text-green-300 hover:bg-green-500/30 transition-colors flex items-center justify-center gap-2">
+                  <Play size={16} /> Play Clips
+                </button>
               </IntelligenceSection>
 
               <IntelligenceSection
                 title={`Competitive Intel (${episode.competitiveIntel.length})`}
-                icon={<Mic size={20} className="text-gray-400" />}
+                icon={<Mic size={20} className="text-red-400" />}
+                borderColor="#F87171"
+                headerBgColor="rgba(248, 113, 113, 0.1)"
               >
                 <div className="flex-grow">
-                  <ul className="space-y-1">
+                  <ul className="space-y-3">
                     {episode.competitiveIntel.map((signal, i) => (
-                      <li key={i} className="group flex items-start gap-3 p-2 -mx-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-                        <button className="font-mono text-gray-500 mt-0.5 hover:text-white transition-colors flex items-center gap-1">
-                          [{signal.timestamp}]
-                          <Play size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </button>
-                        <p style={{ color: "#FFFFFF", fontSize: "15px" }}>{signal.text}</p>
+                      <li key={i} className="flex items-start gap-3 text-sm">
+                        <span className="font-mono text-red-400/80 mt-0.5">[{signal.timestamp}]</span>
+                        <p style={{ color: "#94A3B8" }}>{signal.text}</p>
                       </li>
                     ))}
                   </ul>
                 </div>
+                <button className="mt-4 w-full text-sm font-semibold py-2 px-4 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2">
+                  <Play size={16} /> Play Clips
+                </button>
               </IntelligenceSection>
 
               <IntelligenceSection
                 title={`Your Portfolio Mentions (${episode.portfolioMentions.length})`}
-                icon={<BarChart3 size={20} className="text-gray-400" />}
+                icon={<BarChart3 size={20} className="text-purple-400" />}
+                borderColor="#A78BFA"
+                headerBgColor="rgba(167, 139, 250, 0.1)"
                 actionBadge={
                   episode.portfolioMentions.some(m => m.actionRequired) && (
-                    <span className="px-2 py-0.5 text-xs font-bold text-white bg-purple-500 rounded-full">
+                    <span className="px-2 py-0.5 text-xs font-bold text-black bg-blue-400 rounded-full">
                       ACTION REQUIRED
                     </span>
                   )
                 }
               >
-                <ul className="space-y-1">
+                <ul className="space-y-3">
                   {episode.portfolioMentions.map((mention, i) => (
-                    <li key={i} className="group p-2 -mx-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-                      <div className="flex items-start gap-3">
-                        <button className="font-mono text-gray-500 mt-0.5 hover:text-white transition-colors flex items-center gap-1">
-                          [{mention.timestamp}]
-                          <Play size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </button>
-                        <div className="flex-1">
-                          <p style={{ color: "#FFFFFF", fontSize: "15px" }}>{mention.company} mentioned as &ldquo;category leader&rdquo;</p>
-                          <p className="mt-1 text-sm" style={{ color: "#6B7280" }}>Context: {mention.context}</p>
-                          <p className="text-sm" style={{ color: "#6B7280" }}>Sentiment: {mention.sentiment}</p>
-                        </div>
+                    <li key={i} className="flex items-start gap-3 text-sm">
+                      <span className="font-mono text-purple-400/80 mt-0.5">[{mention.timestamp}]</span>
+                      <div className="flex-1">
+                        <p style={{ color: "#94A3B8" }}>{mention.company} mentioned as "category leader"</p>
+                        <p className="mt-1" style={{ color: "#6B7280" }}>Context: {mention.context}</p>
+                        <p style={{ color: "#6B7280" }}>Sentiment: {mention.sentiment}</p>
                       </div>
                     </li>
                   ))}
@@ -215,15 +224,17 @@ export function IntelligenceBriefModal({ isOpen, onClose, episode }: Intelligenc
 
               <IntelligenceSection
                 title={`LP-Ready Soundbites (${episode.soundbites.length})`}
-                icon={<Quote size={20} className="text-gray-400" />}
+                icon={<Quote size={20} className="text-purple-500" />}
+                borderColor="#9966ff"
+                headerBgColor="rgba(153, 102, 255, 0.15)"
               >
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {episode.soundbites.map((bite, i) => (
-                    <li key={i} className="group">
-                      <blockquote className="text-sm italic border-l-2 border-gray-600 pl-3" style={{ color: "#FFFFFF", fontSize: "15px" }}>
+                    <li key={i}>
+                      <blockquote className="text-sm italic border-l-2 border-purple-500 pl-3" style={{ color: "#94A3B8" }}>
                         &ldquo;{bite.quote}&rdquo;
                       </blockquote>
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-xs text-purple-400/80 mt-2">
                         <span className="font-semibold">Use for:</span> {bite.useFor}
                       </p>
                     </li>
