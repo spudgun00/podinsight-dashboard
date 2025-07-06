@@ -586,3 +586,47 @@ The dashboard now features:
 - Real-time correlation and velocity signals for investment decisions
 
 This session focused on UI/UX polish and creating a more valuable, actionable intelligence system that transforms raw podcast data into investment signals VCs can act on immediately.
+
+### Session 7: Dashboard Layout Optimization - Header Spacing
+**Date**: 2025-07-06
+**Developer**: James Gill  
+**Status**: Completed
+**Duration**: ~15 minutes
+
+#### Problem Identified:
+- Header area consuming 80-100px of valuable above-the-fold space
+- VCs scan dashboards quickly - every pixel counts
+- Critical Episode Intelligence content pushed down
+
+#### Tasks Completed:
+
+1. ✅ **Header Component Optimization** (`header.tsx`):
+   - Reduced vertical padding: `py-4 pb-2` → `py-2` (24px → 8px)
+   - Reduced title size: `text-3xl md:text-4xl` → `text-2xl md:text-3xl`
+   - Simplified subtitle to single size: `text-sm`
+   - Total header height reduced from ~60px to ~40px
+
+2. ✅ **Main Page Spacing Adjustments** (`page.tsx`):
+   - Episode Intelligence top margin: `mt-6` → `mt-3` (24px → 12px)
+   - Metric cards margins: `mb-8 mt-8` → `mb-4 mt-4` (32px → 16px each)
+   - Sentiment Heatmap top margin: `mt-8` → `mt-4` (32px → 16px)
+   - Footer top margin: `mt-12` → `mt-6` (48px → 24px)
+
+3. ✅ **Episode Intelligence Cards Spacing**:
+   - Section padding: `py-8 md:py-12` → `py-4 md:py-6` (32-48px → 16-24px)
+   - Internal bottom margins: `mb-8` → `mb-4` (32px → 16px)
+   - Gradient line bottom margin: `mb-8` → `mb-4`
+
+#### Results:
+- Total header area reduced from ~80-100px to ~40-48px
+- Episode Intelligence cards now appear much higher on initial load
+- More content visible above-the-fold on standard laptop screens
+- Maintains visual breathing room without creating empty voids
+- Preserves design hierarchy while maximizing content density
+
+#### Files Modified:
+- `/components/dashboard/header.tsx` - Reduced padding and font sizes
+- `/app/page.tsx` - Adjusted all vertical spacing between sections
+- `/components/intelligence/episode-intelligence-cards.tsx` - Reduced internal spacing
+
+This optimization ensures VCs see critical intelligence immediately upon loading the dashboard, improving time-to-insight and reducing scroll requirements.

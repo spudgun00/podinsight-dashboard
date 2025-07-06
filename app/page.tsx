@@ -111,7 +111,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0 }}
-            className="mt-6"
+            className="mt-3"
           >
             <EpisodeIntelligenceCards
               onViewAllEpisodesClick={handleViewAllEpisodesClick}
@@ -126,7 +126,7 @@ export default function DashboardPage() {
           />
 
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 mt-8 justify-items-center lg:justify-items-start"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-4 justify-items-center lg:justify-items-start"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -172,7 +172,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-8"
+            className="mt-4"
           >
             <SentimentHeatmap 
               data={sentimentData}
@@ -183,7 +183,7 @@ export default function DashboardPage() {
             />
           </motion.div>
 
-          <footer className="mt-12 text-center">
+          <footer className="mt-6 text-center">
             <p className="flex items-center justify-center gap-2" style={{ color: "#6B7280", fontSize: "13px" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
