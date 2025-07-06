@@ -1,0 +1,51 @@
+{
+  "workspace": {
+    "gid": "1210591545825845",
+    "name": "podinsighthq.com"
+  },
+  "project": {
+    "gid": "1210696245097468",
+    "name": "PodInsightHQ Development"
+  },
+  "story7": {
+    "parent": {
+      "gid": "1210720364177018",
+      "name": "STORY 7: API Integration for Dashboard",
+      "url": "https://app.asana.com/1/1210591545825845/project/1210696245097468/task/1210720364177018"
+    },
+    "subtasks": [
+      {
+        "gid": "1210720454340896",
+        "name": "Set up API client and authentication"
+      },
+      {
+        "gid": "1210720454479813",
+        "name": "Create useIntelligence hook"
+      },
+      {
+        "gid": "1210720364551623",
+        "name": "Create useEpisodeBrief hook"
+      },
+      {
+        "gid": "1210720327708253",
+        "name": "Integrate API hooks with components"
+      },
+      {
+        "gid": "1210720364686810",
+        "name": "Implement error handling UI"
+      },
+      {
+        "gid": "1210720364693083",
+        "name": "Add real-time updates"
+      },
+      {
+        "gid": "1210720327885146",
+        "name": "Optimize performance"
+      },
+      {
+        "gid": "1210720454674100",
+        "name": "Integration testing"
+      }
+    ]
+  }
+}

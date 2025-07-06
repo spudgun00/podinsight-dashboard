@@ -577,7 +577,7 @@ export function SearchCommandBar({ onSearch, className = "", mode = "inline" }: 
               onFocus={handleInputFocus}
               onBlur={handleInputBlur}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything about podcast trends, topics, or insights... (min 4 chars)"
+              placeholder="Ask anything about podcast trends, topics, or insights..."
               className="flex-1 bg-transparent text-base text-gray-100 placeholder-gray-400 border-none outline-none"
               autoComplete="off"
               spellCheck="false"
