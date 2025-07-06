@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Settings, Headphones, MoreHorizontal, Mail, Link, Clock, ChevronDown, ChevronUp } from "lucide-react"
+import { Settings, Headphones, MoreHorizontal, Mail, Link, Clock, ChevronDown } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { newMockEpisodes, type NewEpisode } from "@/lib/new-mock-episode-data"
 
@@ -62,7 +62,7 @@ const NewEpisodeCard = ({
         boxShadow: "0 4px 16px rgba(0, 0, 0, 0.6)" 
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden"
+      className="rounded-2xl p-5 md:p-6 flex flex-col gap-4 relative overflow-hidden"
       style={{ 
         backgroundColor: "#1A1A1C",
         border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -75,18 +75,44 @@ const NewEpisodeCard = ({
         style={{ backgroundColor: meta.accentColor }}
       />
       <div className="flex justify-between items-start">
-        <p className="text-xs font-bold uppercase tracking-widest text-intel-gray">{episode.podcastName}</p>
-        <div className="flex items-center gap-2">
+        <p className="text-xs font-medium" style={{ color: "#9CA3AF", fontSize: "12px", fontWeight: 500 }}>
+          {episode.podcastName.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ')}
+        </p>
+        <div className="flex items-center gap-3">
+          {/* Score badge */}
+          <div className="group">
+            <div className="flex items-center gap-1 text-brand-red font-bold text-sm group-hover:animate-pulse-subtle">
+              <span>🔥</span>
+              <span>{episode.score}</span>
+            </div>
+          </div>
+          {/* Audio button - mobile only in header */}
+          <motion.button
+            onClick={() => {
+              setIsPlayingAudio(!isPlayingAudio)
+              if (!isPlayingAudio) {
+                setTimeout(() => setIsPlayingAudio(false), 2000)
+              }
+            }}
+            whileTap={{ scale: 0.95 }}
+            animate={isPlayingAudio ? { scale: [1, 1.1, 1] } : {}}
+            transition={isPlayingAudio ? { repeat: Infinity, duration: 1 } : {}}
+            className="flex md:hidden w-8 h-8 rounded-full items-center justify-center bg-white/5"
+          >
+            <Headphones size={18} className="opacity-60" />
+          </motion.button>
           {/* Three-dot menu */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1 rounded-md hover:bg-white/10 transition-all duration-200"
+              className="w-8 h-8 md:w-8 md:h-8 flex items-center justify-center transition-opacity duration-200"
             >
-              <MoreHorizontal size={18} className="opacity-50 hover:opacity-100 transition-opacity" />
+              <MoreHorizontal size={20} className="opacity-60 md:opacity-40 hover:opacity-80 transition-opacity" />
             </button>
             {showMenu && (
-              <div className="absolute right-0 top-8 bg-[#1A1A1C] border border-white/10 rounded-lg shadow-xl z-50 min-w-[180px]">
+              <div className="absolute right-0 top-9 bg-[#1A1A1C] border border-white/10 rounded-lg shadow-xl z-50 min-w-[180px]">
                 <button className="w-full px-4 py-2.5 text-sm text-left text-white/80 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3">
                   <Mail size={16} />
                   Share via Email
@@ -102,17 +128,15 @@ const NewEpisodeCard = ({
               </div>
             )}
           </div>
-          {/* Score badge */}
-          <div className="group">
-            <div className="flex items-center gap-1 text-brand-red font-bold text-sm group-hover:animate-pulse-subtle">
-              <span>🔥</span>
-              <span>{episode.score}</span>
-            </div>
-          </div>
         </div>
       </div>
 
-      <h3 className="text-xl font-semibold text-white leading-tight">{episode.episodeTitle}</h3>
+      <h3 
+        className="text-xl font-semibold text-white"
+        style={{ letterSpacing: "-0.01em", lineHeight: 1.3 }}
+      >
+        {episode.episodeTitle}
+      </h3>
 
       <div className="flex items-center gap-2">
         <span className="text-lg">{meta.icon}</span>
@@ -128,11 +152,11 @@ const NewEpisodeCard = ({
         </span>
       </div>
 
-      <ul className="space-y-2">
+      <ul className="space-y-3">
         {episode.intel.map((point, index) => (
-          <li key={index} className="flex items-start gap-2 text-sm text-intel-gray">
-            <span className="opacity-50 mt-1">•</span>
-            <span>{point}</span>
+          <li key={index} className="flex items-start gap-2 text-sm">
+            <span className="mt-1" style={{ color: "#94A3B8" }}>•</span>
+            <span style={{ color: "#94A3B8" }}>{point}</span>
           </li>
         ))}
       </ul>
@@ -142,10 +166,10 @@ const NewEpisodeCard = ({
         <span>⏱️ {episode.durationAgo}</span>
       </div>
 
-      <div className="flex items-center gap-3 mt-4">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mt-4">
         <button
           onClick={() => onViewBriefClick(episode)}
-          className="flex-1 text-center text-white font-semibold py-3 rounded-lg bg-gradient-to-r from-brand-purple to-brand-pink hover:brightness-110 transition-all duration-300"
+          className="w-full md:flex-1 text-center text-white font-semibold py-3 rounded-lg bg-gradient-to-r from-brand-purple to-brand-pink hover:brightness-110 transition-all duration-300"
           style={{
             fontSize: "15px",
             fontWeight: 600,
@@ -166,7 +190,7 @@ const NewEpisodeCard = ({
           whileTap={{ scale: 0.95 }}
           animate={isPlayingAudio ? { scale: [1, 1.1, 1] } : {}}
           transition={isPlayingAudio ? { repeat: Infinity, duration: 1 } : {}}
-          className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+          className="hidden md:flex w-10 h-10 rounded-full items-center justify-center transition-all duration-200 hover:shadow-[0_0_20px_rgba(139,92,246,0.4)]"
           style={{ backgroundColor: "#1A1A1C" }}
         >
           <Headphones 
@@ -240,9 +264,9 @@ export function EpisodeIntelligenceCards({
         </div>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-3 md:space-y-5">
         <motion.div 
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-5"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5"
           layout
         >
           <AnimatePresence mode="popLayout">
@@ -267,20 +291,30 @@ export function EpisodeIntelligenceCards({
         {hiddenEpisodesCount > 0 && (
           <motion.button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full py-4 px-6 text-[#8B5CF6] bg-transparent border border-[#8B5CF6] rounded-lg font-semibold transition-all duration-300 hover:bg-[#8B5CF6] hover:text-white flex items-center justify-center gap-2 group"
+            className="w-full py-4 px-6 text-[#8B5CF6] bg-transparent border border-[#8B5CF6] rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 group"
+            style={{
+              backgroundColor: isExpanded ? "transparent" : "transparent"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(139, 92, 246, 0.05)"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent"
+            }}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
           >
             <span>
               {isExpanded 
                 ? "Show less" 
-                : `Show ${hiddenEpisodesCount} more episodes below threshold`}
+                : `${hiddenEpisodesCount} episodes scored 70-85`}
             </span>
-            {isExpanded ? (
-              <ChevronUp size={20} className="transition-transform group-hover:-translate-y-1" />
-            ) : (
-              <ChevronDown size={20} className="transition-transform group-hover:translate-y-1" />
-            )}
+            <motion.div
+              animate={{ rotate: isExpanded ? 180 : 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <ChevronDown size={20} />
+            </motion.div>
           </motion.button>
         )}
       </div>
