@@ -39,25 +39,25 @@ interface ActionableCardProps extends CardData {}
 
 // Card container styling
 const cardStyles = {
-  container: "group relative bg-black/30 backdrop-blur-sm border border-purple-500/10 rounded-xl p-4 sm:p-6 hover:border-purple-500/30 sm:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(139,92,246,0.2)] transition-all duration-300",
-  iconWrapper: "w-10 h-10 sm:w-12 sm:h-12 bg-purple-500/10 rounded-lg flex items-center justify-center flex-shrink-0 touch-manipulation",
-  icon: "w-5 h-5 sm:w-6 sm:h-6 text-purple-400",
-  title: "text-white font-semibold text-base sm:text-lg",
-  subtitle: "text-gray-400 text-xs sm:text-sm",
-  action: "text-purple-400 text-sm font-medium hover:text-purple-300 transition-colors flex items-center gap-1 min-h-[44px] flex items-center",
-  section: "pb-3 mb-3 sm:pb-4 sm:mb-4 border-b border-purple-500/10",
-  metric: "text-white text-2xl sm:text-3xl font-bold",
-  metricLabel: "text-gray-400 text-xs sm:text-sm font-normal ml-2",
-  topItemsHeader: "text-gray-500 text-xs uppercase tracking-wider mb-2 sm:mb-3 font-medium",
-  topItem: "text-sm mb-2 sm:mb-3 last:mb-0",
+  container: "bg-black/40 backdrop-blur-xl border border-purple-500/20 rounded-xl p-6 hover:border-purple-500/40 transition-all duration-300",
+  iconWrapper: "w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4",
+  icon: "w-6 h-6 text-purple-400",
+  title: "text-white font-semibold text-lg mb-1",
+  subtitle: "text-gray-400 text-sm mb-4",
+  action: "text-purple-400 text-sm font-medium hover:text-purple-300 transition-colors flex items-center gap-1",
+  section: "pb-4 mb-4 border-b border-purple-500/10",
+  metric: "text-white text-3xl font-bold",
+  metricLabel: "text-gray-400 text-sm font-normal ml-2",
+  topItemsHeader: "text-gray-500 text-xs uppercase tracking-wider mb-3 font-medium",
+  topItem: "text-sm mb-3 last:mb-0",
   topItemTitle: "text-gray-300 leading-tight text-sm",
   topItemMeta: "text-gray-500 text-xs ml-3 mt-0.5",
-  timeAlert: "mb-3 sm:mb-4 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2",
+  timeAlert: "mb-4 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2",
   timeAlertText: "text-red-400 text-xs font-medium",
-  moreItems: "text-purple-400 text-xs mt-2 sm:mt-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200",
-  newBadge: "inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 ml-2",
+  moreItems: "text-purple-400 text-xs mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+  newBadge: "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 ml-2",
   criticalPulse: "absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse",
-  emptyState: "text-gray-500 text-sm text-center py-6 sm:py-8",
+  emptyState: "text-gray-500 text-sm text-center py-8",
   mobileExpanded: "fixed inset-x-4 bottom-4 z-50 max-h-[80vh] overflow-y-auto"
 };
 
@@ -234,7 +234,7 @@ const ActionableCard = ({
     <>
       <motion.div
         ref={cardRef}
-        className={`relative cursor-pointer h-full min-h-[320px] sm:min-h-[380px] ${cardStyles.container} ${isExpanded && isMobile ? 'z-40' : ''}`}
+        className={`group relative cursor-pointer h-full ${cardStyles.container} ${isExpanded && isMobile ? 'z-40' : ''}`}
         style={{ 
           opacity: opacity,
           x
@@ -257,114 +257,111 @@ const ActionableCard = ({
           <div className={cardStyles.criticalPulse} />
         )}
       
-      <div className="h-full flex flex-col">
-        {/* Header Section */}
-        <div className={cardStyles.section}>
-          <div className="flex items-center gap-3">
-            <div className={cardStyles.iconWrapper}>
-              <div className={cardStyles.icon}>{icon}</div>
-            </div>
-            <div className="flex-1">
-              <h3 className={cardStyles.title}>{title}</h3>
-              <p className={cardStyles.subtitle}>{subtitle}</p>
-            </div>
-            <span className="text-sm">{getUrgencyDot(urgency)}</span>
+      <div className="h-full flex flex-col justify-between">
+        {/* Header Section with Icon */}
+        <div>
+          <div className={cardStyles.iconWrapper}>
+            <div className={cardStyles.icon}>{icon}</div>
           </div>
-        </div>
-        
-        {isEmpty ? (
-          /* Empty State */
-          <div className="flex-1 flex items-center justify-center">
-            <div className={cardStyles.emptyState}>
-              <p className="mb-2">No new {title.toLowerCase()} yet</p>
-              <p className="text-xs">
-                {title === 'Market Signals' && 'Check back soon for trending topics'}
-                {title === 'Deal Intelligence' && 'New opportunities appear daily'}
-                {title === 'Portfolio Pulse' && 'Your portfolio companies are quiet today'}
-                {title === 'Executive Brief' && 'Generate your first brief to get started'}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Metric Section */}
-            <div className={cardStyles.section}>
-              <p className={cardStyles.metric}>
-                {animatedCount}
-                <span className={cardStyles.metricLabel}>
-                  {title === 'Market Signals' && 'new signals'}
-                  {title === 'Deal Intelligence' && 'opportunities'}
-                  {title === 'Portfolio Pulse' && 'mentions'}
-                  {title === 'Executive Brief' && 'key insights'}
-                </span>
-              </p>
-              <p className="text-gray-500 text-xs mt-1">{getTimePeriod(lastUpdated)}</p>
-            </div>
-            
-            {/* Time Sensitive Alert with countdown */}
-            {timeSensitive && timeSensitive.isExpiring && (
-              <motion.div 
-                className={cardStyles.timeAlert}
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <p className={cardStyles.timeAlertText}>
-                  ⚡ {timeSensitive.daysRemaining} {timeSensitive.daysRemaining === 1 ? 'day' : 'days'} until deadline
+          <h3 className={cardStyles.title}>{title}</h3>
+          <p className={cardStyles.subtitle}>{subtitle}</p>
+          
+          {!isEmpty && (
+            <>
+              {/* Metric Section */}
+              <div className={cardStyles.section}>
+                <p className={cardStyles.metric}>
+                  {animatedCount}
+                  <span className={cardStyles.metricLabel}>
+                    {title === 'Market Signals' && 'new signals'}
+                    {title === 'Deal Intelligence' && 'opportunities'}
+                    {title === 'Portfolio Pulse' && 'mentions'}
+                    {title === 'Executive Brief' && 'key insights'}
+                  </span>
                 </p>
-              </motion.div>
-            )}
+                <p className="text-gray-500 text-xs mt-1">{getTimePeriod(lastUpdated)}</p>
+              </div>
             
-            {/* Preview List Section */}
-            <div className="flex-1">
-              <p className={cardStyles.topItemsHeader}>Top Items</p>
-              {contentLoaded ? (
-                <AnimatePresence mode="wait">
-                  <div>
-                    {topItems.slice(0, itemsToShow).map((item, index) => (
-                      <motion.div 
-                        key={item.id} 
-                        className={cardStyles.topItem}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <p className={cardStyles.topItemTitle}>
-                          • {item.title}
-                          {isNew(item.timestamp) && (
-                            <span className={cardStyles.newBadge}>NEW</span>
-                          )}
-                        </p>
-                        {item.source && !isMobile && (
-                          <p className={cardStyles.topItemMeta}>
-                            {item.source} · {item.timestamp ? formatTimeAgo(item.timestamp) : 'recent'}
+              {/* Time Sensitive Alert with countdown */}
+              {timeSensitive && timeSensitive.isExpiring && (
+                <motion.div 
+                  className={cardStyles.timeAlert}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <p className={cardStyles.timeAlertText}>
+                    ⚡ {timeSensitive.daysRemaining} {timeSensitive.daysRemaining === 1 ? 'day' : 'days'} until deadline
+                  </p>
+                </motion.div>
+              )}
+              
+              {/* Preview List Section */}
+              <div className="flex-1">
+                <p className={cardStyles.topItemsHeader}>Top Items</p>
+                {contentLoaded ? (
+                  <AnimatePresence mode="wait">
+                    <div>
+                      {topItems.slice(0, itemsToShow).map((item, index) => (
+                        <motion.div 
+                          key={item.id} 
+                          className={cardStyles.topItem}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <p className={cardStyles.topItemTitle}>
+                            • {item.title}
+                            {isNew(item.timestamp) && (
+                              <span className={cardStyles.newBadge}>NEW</span>
+                            )}
                           </p>
-                        )}
-                      </motion.div>
+                          {item.source && !isMobile && (
+                            <p className={cardStyles.topItemMeta}>
+                              {item.source} · {item.timestamp ? formatTimeAgo(item.timestamp) : 'recent'}
+                            </p>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </AnimatePresence>
+                ) : (
+                  <div className="space-y-2">
+                    {[...Array(itemsToShow)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-4 bg-gray-700 rounded w-3/4 mb-1"></div>
+                        <div className="h-3 bg-gray-800 rounded w-1/2"></div>
+                      </div>
                     ))}
                   </div>
-                </AnimatePresence>
-              ) : (
-                <div className="space-y-2">
-                  {[...Array(itemsToShow)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="h-4 bg-gray-700 rounded w-3/4 mb-1"></div>
-                      <div className="h-3 bg-gray-800 rounded w-1/2"></div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {remainingCount > 0 && (
-                <p className={cardStyles.moreItems}>
-                  +{remainingCount} more {remainingCount === 1 ? 'item' : 'items'}
+                )}
+                {remainingCount > 0 && (
+                  <p className={cardStyles.moreItems}>
+                    +{remainingCount} more {remainingCount === 1 ? 'item' : 'items'}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+          
+          {isEmpty && (
+            /* Empty State */
+            <div className="flex-1 flex items-center justify-center">
+              <div className={cardStyles.emptyState}>
+                <p className="mb-2">No new {title.toLowerCase()} yet</p>
+                <p className="text-xs">
+                  {title === 'Market Signals' && 'Check back soon for trending topics'}
+                  {title === 'Deal Intelligence' && 'New opportunities appear daily'}
+                  {title === 'Portfolio Pulse' && 'Your portfolio companies are quiet today'}
+                  {title === 'Executive Brief' && 'Generate your first brief to get started'}
                 </p>
-              )}
+              </div>
             </div>
-          </>
-        )}
+          )}
+        </div>
         
         {/* Action Footer */}
-        <div className="pt-3 sm:pt-4 mt-auto border-t border-purple-500/10">
+        <div className="mt-auto">
           <p className={cardStyles.action}>
             {isGenerating ? 'Generating...' : 
              isMobile && !isExpanded ? 'Tap to expand' : actionText}
@@ -594,36 +591,17 @@ export const ActionableIntelligenceCards = () => {
   ]
 
   return (
-    <div className="relative -mt-4 sm:-mt-6 mb-6 sm:mb-8">
-      {/* Subtle gradient separator */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
-      
-      {/* Visual wrapper with subtle background */}
-      <div className="relative rounded-2xl bg-gradient-to-b from-purple-500/[0.02] to-transparent p-4 sm:p-6 pt-6 sm:pt-8">
-        {/* Subtle watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden rounded-2xl">
-          <span className="text-purple-500/[0.03] text-6xl sm:text-8xl font-bold tracking-wider rotate-[-15deg] select-none">
-            COMMAND CENTER
-          </span>
-        </div>
-        
-        {/* Glass morphism border effect */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-purple-500/[0.05] to-transparent opacity-50" />
-        
-        {/* Cards grid */}
-        <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {cards.map((card, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <ActionableCard {...card} />
-            </motion.div>
-          ))}
-        </div>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {cards.map((card, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+        >
+          <ActionableCard {...card} />
+        </motion.div>
+      ))}
     </div>
   )
 }
