@@ -6,7 +6,6 @@ import { DashboardHeader } from "@/components/dashboard/header"
 import { MetricCard } from "@/components/dashboard/metric-card"
 import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
 import { SentimentHeatmap } from "@/components/dashboard/sentiment-heatmap"
-import { SearchCommandBar } from "@/components/dashboard/search-command-bar-fixed"
 import { FloatingAIButton } from "@/components/dashboard/floating-ai-button"
 import { EpisodeIntelligenceCards } from "@/components/intelligence/episode-intelligence-cards"
 import { IntelligenceBriefModal } from "@/components/intelligence/IntelligenceBriefModal"
@@ -119,12 +118,6 @@ export default function DashboardPage() {
               onViewBriefClick={handleViewBriefClick}
             />
           </motion.div>
-
-          {/* Search Command Bar */}
-          <SearchCommandBar 
-            onSearch={(query) => {}}
-            mode="inline"
-          />
 
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-4 justify-items-center lg:justify-items-start"
