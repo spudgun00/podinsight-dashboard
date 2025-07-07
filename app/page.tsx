@@ -1,9 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { TrendingUp, BarChart2, Zap, CheckCircle } from "lucide-react"
 import { DashboardHeader } from "@/components/dashboard/header"
-import { MetricCard } from "@/components/dashboard/metric-card"
 import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
 import { SentimentHeatmap } from "@/components/dashboard/sentiment-heatmap"
 import { FloatingAIButton } from "@/components/dashboard/floating-ai-button"
@@ -36,15 +34,6 @@ const convertNewEpisodeToEpisode = (newEpisode: NewEpisode): Episode => {
   }
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-}
 
 
 export default function DashboardPage() {
@@ -119,44 +108,87 @@ export default function DashboardPage() {
             />
           </motion.div>
 
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-4 justify-items-center lg:justify-items-start"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <MetricCard 
-              title="Trending Now" 
-              value={notablePerformer?.topic || "Loading..."} 
-              icon={<TrendingUp size={20} />} 
-              change={notablePerformer?.change}
-              changeType={notablePerformer?.positive ? "positive" : "negative"}
-            />
-            <MetricCard 
-              title="Episodes Analyzed" 
-              value={1171} 
-              icon={<BarChart2 size={20} />} 
-              animation="count-up" 
-              change="+127 this week"
-              changeType="positive"
-            />
-            <MetricCard 
-              title="Insights Generated" 
-              value="Realtime" 
-              icon={<Zap size={20} />} 
-              animation="pulse" 
-              change="99.8% uptime"
-              changeType="positive"
-            />
-            <MetricCard 
-              title="Data Freshness" 
-              value="Live" 
-              icon={<CheckCircle size={20} />} 
-              animation="pulse" 
-              change="< 5 min delay"
-              changeType="positive"
-            />
-          </motion.div>
+          {/* Actionable Intelligence Cards Section */}
+          <section className="mt-12 mb-12">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 w-full"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+            {/* What's Hot Card */}
+            <div 
+              className="group bg-[#1A1A1C] border border-white/[0.06] rounded-xl p-5 h-[100px] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-200"
+              onClick={() => console.log("View What's Hot")}
+            >
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(239,68,68,0.2)] group-hover:bg-red-500/25 group-hover:scale-110 transition-all duration-300">
+                    🔥
+                  </div>
+                  <h3 className="text-white text-base font-semibold mt-3">What's Hot</h3>
+                  <p className="text-[#9CA3AF] text-sm">12 new signals today</p>
+                </div>
+                <p className="text-[#A78BFA] text-sm hover:underline">View Latest →</p>
+              </div>
+            </div>
+
+            {/* Deal Flow Card */}
+            <div 
+              className="group bg-[#1A1A1C] border border-white/[0.06] rounded-xl p-5 h-[100px] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-200"
+              onClick={() => console.log("Track Deal Flow")}
+            >
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-green-500/15 border border-green-500/30 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(34,197,94,0.2)] group-hover:bg-green-500/25 group-hover:scale-110 transition-all duration-300">
+                    💰
+                  </div>
+                  <h3 className="text-white text-base font-semibold mt-3">Deal Flow</h3>
+                  <p className="text-[#9CA3AF] text-sm">Track investment signals</p>
+                </div>
+                <p className="text-[#A78BFA] text-sm hover:underline">Track Deals →</p>
+              </div>
+            </div>
+
+            {/* Your Portfolio Card */}
+            <div 
+              className="group bg-[#1A1A1C] border border-white/[0.06] rounded-xl p-5 h-[100px] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-200"
+              onClick={() => console.log("View Portfolio Mentions")}
+            >
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(139,92,246,0.2)] group-hover:bg-purple-500/25 group-hover:scale-110 transition-all duration-300">
+                    📊
+                  </div>
+                  <h3 className="text-white text-base font-semibold mt-3">Your Portfolio</h3>
+                  <p className="text-[#9CA3AF] text-sm">3 mentions this week</p>
+                </div>
+                <p className="text-[#A78BFA] text-sm hover:underline">View Mentions →</p>
+              </div>
+            </div>
+
+            {/* Quick Brief Card */}
+            <div 
+              className="group bg-[#1A1A1C] border border-white/[0.06] rounded-xl p-5 h-[100px] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-200"
+              onClick={() => console.log("Generate Quick Brief")}
+            >
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(251,191,36,0.2)] group-hover:bg-amber-500/25 group-hover:scale-110 transition-all duration-300">
+                    ⚡
+                  </div>
+                  <h3 className="text-white text-base font-semibold mt-3">Quick Brief</h3>
+                  <p className="text-[#9CA3AF] text-sm">5 min intelligence digest</p>
+                </div>
+                <p className="text-[#A78BFA] text-sm hover:underline">Generate →</p>
+              </div>
+            </div>
+            </motion.div>
+          </section>
+
+          {/* Divider */}
+          <div className="h-px bg-white/[0.06] my-12" />
+
           <TopicVelocityChartFullV0 
             onNotablePerformerChange={setNotablePerformer}
           />
