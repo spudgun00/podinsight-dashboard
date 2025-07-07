@@ -7,6 +7,7 @@ import { MetricCard } from "@/components/dashboard/metric-card"
 import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
 import { SentimentHeatmap } from "@/components/dashboard/sentiment-heatmap"
 import { SearchCommandBar } from "@/components/dashboard/search-command-bar-fixed"
+import { FloatingAIButton } from "@/components/dashboard/floating-ai-button"
 import { EpisodeIntelligenceCards } from "@/components/intelligence/episode-intelligence-cards"
 import { IntelligenceBriefModal } from "@/components/intelligence/IntelligenceBriefModal"
 import { AllEpisodesView } from "@/components/intelligence/AllEpisodesView"
@@ -183,17 +184,23 @@ export default function DashboardPage() {
             />
           </motion.div>
 
-          <footer className="mt-6 text-center">
-            <p className="flex items-center justify-center gap-2" style={{ color: "#6B7280", fontSize: "13px" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-              <span>Last updated: {lastUpdated} seconds ago. Tracking 5 topics across 29 podcasts.</span>
-            </p>
-          </footer>
         </div>
       </main>
+      
+      {/* Footer Bar */}
+      <footer 
+        className="relative w-full mt-12"
+        style={{
+          background: "rgba(0, 0, 0, 0.3)",
+          borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+        }}
+      >
+        <div className="py-3 text-center">
+          <p style={{ fontSize: "12px", color: "#6B7280" }}>
+            Analyzing 1,171 episodes • Updated every 30 mins • 99.8% uptime
+          </p>
+        </div>
+      </footer>
 
       {/* Episode Intelligence Modals */}
       {selectedEpisode && (
@@ -220,6 +227,9 @@ export default function DashboardPage() {
           setShowAllEpisodes(false)
         }}
       />
+
+      {/* Floating AI Assistant Button */}
+      <FloatingAIButton />
     </div>
   )
 }
