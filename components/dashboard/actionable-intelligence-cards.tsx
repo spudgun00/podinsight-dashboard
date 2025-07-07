@@ -1,62 +1,96 @@
 "use client"
 
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
-import { TrendingUp, CircleDollarSign, Briefcase, Zap } from "lucide-react"
+import { TrendingUp, CircleDollarSign, Briefcase, FileText } from "lucide-react"
 import { ReactNode, useState, useEffect, useRef, useCallback } from "react"
 
 // Types for rich preview items
 type UrgencyLevel = 'critical' | 'high' | 'normal'
+type VisualPriority = 1 | 2 | 3
 
-interface PreviewItem {
-  id: string
-  title: string
-  description: string
-  source?: string // e.g., "All-In Pod", "20VC"
-  timestamp?: Date
-  tags?: string[]
+// New rich preview item structure
+interface RichPreviewItem {
+  label: string
+  value: string
+  urgency: UrgencyLevel
+  metadata?: {
+    source?: string
+    timestamp?: Date
+    trend?: string
+  }
 }
 
 interface TimeSensitiveData {
-  deadline?: Date
-  daysRemaining?: number
-  isExpiring?: boolean
+  deadline: string
+  consequence: string
 }
 
-interface CardData {
-  icon: ReactNode
+// Transform each card into a mini-dashboard
+interface IntelligenceCard {
+  // Core Info
   title: string
-  subtitle: string
-  actionText: string
-  topItems: PreviewItem[]
-  urgency: UrgencyLevel
+  primaryMetric: string
+  primaryMetricContext: string
+  
+  // Rich Preview
+  topItems: RichPreviewItem[]
+  
+  // Actionable Context
   timeSensitive?: TimeSensitiveData
+  
+  // Visual Hierarchy
+  visualPriority: VisualPriority
+  
+  // Additional data for rendering
+  icon: ReactNode
+  actionText: string
+  urgency: UrgencyLevel
   lastUpdated: Date
-  totalCount?: number
+  trend?: {
+    direction: 'up' | 'down' | 'neutral'
+    percentage: number
+  }
   onClick: () => void
 }
 
-interface ActionableCardProps extends CardData {}
+interface ActionableCardProps extends IntelligenceCard {}
 
-// Card container styling
+// Get container class based on visual priority
+const getContainerClass = (priority: VisualPriority) => {
+  const base = "bg-black/40 backdrop-blur-xl border rounded-xl transition-all duration-300"
+  // Using consistent padding for all cards to maintain uniform height
+  return `${base} border-purple-500/30 p-6 hover:border-purple-500/50 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]`
+}
+
+// Card container styling with enhanced visual effects
 const cardStyles = {
-  container: "bg-black/40 backdrop-blur-xl border border-purple-500/20 rounded-xl p-6 hover:border-purple-500/40 transition-all duration-300",
-  iconWrapper: "w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4",
-  icon: "w-6 h-6 text-purple-400",
+  iconWrapper: "w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-lg flex items-center justify-center mb-4 relative overflow-hidden group-hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all duration-300",
+  iconGlow: "absolute inset-0 bg-purple-500/20 blur-xl scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+  icon: "w-6 h-6 text-purple-400 relative z-10 group-hover:text-purple-300 transition-colors duration-300",
   title: "text-white font-semibold text-lg mb-1",
   subtitle: "text-gray-400 text-sm mb-4",
-  action: "text-purple-400 text-sm font-medium hover:text-purple-300 transition-colors flex items-center gap-1",
+  action: "text-purple-400 text-sm font-medium hover:text-purple-300 transition-all duration-300 flex items-center gap-1 hover:underline decoration-purple-400/50 underline-offset-2",
   section: "pb-4 mb-4 border-b border-purple-500/10",
-  metric: "text-white text-3xl font-bold",
+  metric: "text-white text-4xl font-bold tracking-tight",
   metricLabel: "text-gray-400 text-sm font-normal ml-2",
-  topItemsHeader: "text-gray-500 text-xs uppercase tracking-wider mb-3 font-medium",
+  trendIndicator: "inline-flex items-center text-sm font-medium ml-2",
+  trendUp: "text-emerald-400",
+  trendDown: "text-red-400",
+  topItemsHeader: "text-gray-400 text-xs uppercase tracking-wider mb-3 font-semibold border-b border-purple-500/10 pb-2",
   topItem: "text-sm mb-3 last:mb-0",
   topItemTitle: "text-gray-300 leading-tight text-sm",
   topItemMeta: "text-gray-500 text-xs ml-3 mt-0.5",
+  // Rich preview item styles
+  richItem: "flex justify-between items-start mb-3 last:mb-0",
+  richItemLabel: "text-gray-400 text-sm",
+  richItemValue: "text-white text-sm font-medium ml-2 text-right flex-1",
+  richItemUrgencyDot: "inline-block w-2 h-2 rounded-full ml-2",
   timeAlert: "mb-4 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2",
   timeAlertText: "text-red-400 text-xs font-medium",
   moreItems: "text-purple-400 text-xs mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
   newBadge: "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 ml-2",
-  criticalPulse: "absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse",
+  criticalPulse: "absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]",
+  highIndicator: "absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(251,146,60,0.4)]",
   emptyState: "text-gray-500 text-sm text-center py-8",
   mobileExpanded: "fixed inset-x-4 bottom-4 z-50 max-h-[80vh] overflow-y-auto"
 };
@@ -67,6 +101,15 @@ const getUrgencyDot = (urgency: UrgencyLevel) => {
     case 'critical': return '🔴'
     case 'high': return '🟡'
     case 'normal': return '🟢'
+  }
+}
+
+// Helper function to get urgency color class
+const getUrgencyColorClass = (urgency: UrgencyLevel) => {
+  switch (urgency) {
+    case 'critical': return 'bg-red-500'
+    case 'high': return 'bg-orange-500'
+    case 'normal': return 'bg-green-500'
   }
 }
 
@@ -176,14 +219,16 @@ const useIntersectionObserver = (ref: React.RefObject<HTMLElement>, options = {}
 const ActionableCard = ({ 
   icon, 
   title, 
-  subtitle, 
+  primaryMetric,
+  primaryMetricContext, 
   actionText, 
   onClick,
   topItems,
   urgency,
   timeSensitive,
   lastUpdated,
-  totalCount
+  visualPriority,
+  trend
 }: ActionableCardProps) => {
   const { isMobile, isTablet } = useResponsive();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -197,9 +242,13 @@ const ActionableCard = ({
   const opacity = useTransform(x, [-100, 0, 100], [0.5, 1, 0.5]);
   
   // Adjust items shown based on device
-  const itemsToShow = isMobile ? 2 : 3;
-  const remainingCount = totalCount && totalCount > itemsToShow ? totalCount - itemsToShow : 0;
-  const animatedCount = useCountUp(totalCount || topItems.length, 1200);
+  const getItemsToShow = () => {
+    if (isMobile) return 2;
+    return 3; // Show 3 items for all cards on desktop
+  };
+  const itemsToShow = getItemsToShow();
+  const remainingCount = topItems.length > itemsToShow ? topItems.length - itemsToShow : 0;
+  const animatedMetric = useCountUp(parseInt(primaryMetric) || 0, 1200);
   
   // Lazy load content when visible
   useEffect(() => {
@@ -221,7 +270,7 @@ const ActionableCard = ({
     }
   }, [isMobile, isExpanded, title, onClick]);
   
-  const handleSwipeEnd = useCallback((event: any, info: any) => {
+  const handleSwipeEnd = useCallback((_event: any, info: any) => {
     if (Math.abs(info.offset.x) > 100) {
       setIsExpanded(!isExpanded);
     }
@@ -234,15 +283,16 @@ const ActionableCard = ({
     <>
       <motion.div
         ref={cardRef}
-        className={`group relative cursor-pointer h-full ${cardStyles.container} ${isExpanded && isMobile ? 'z-40' : ''}`}
+        className={`group relative cursor-pointer h-full ${getContainerClass(visualPriority)} ${isExpanded && isMobile ? 'z-40' : ''}`}
         style={{ 
           opacity: opacity,
           x
         }}
         onClick={handleClick}
         whileHover={!isMobile ? { 
-          y: -4,
-          transition: { duration: 0.2 }
+          scale: 1.02,
+          y: -2,
+          transition: { duration: 0.2, ease: "easeOut" }
         } : {}}
         drag={isMobile ? "x" : false}
         dragConstraints={{ left: 0, right: 0 }}
@@ -252,38 +302,58 @@ const ActionableCard = ({
         animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Critical pulse indicator */}
+        {/* Urgency indicators */}
         {urgency === 'critical' && !isEmpty && contentLoaded && (
           <div className={cardStyles.criticalPulse} />
+        )}
+        {urgency === 'high' && !isEmpty && contentLoaded && (
+          <div className={cardStyles.highIndicator} />
         )}
       
       <div className="h-full flex flex-col justify-between">
         {/* Header Section with Icon */}
         <div>
           <div className={cardStyles.iconWrapper}>
+            <div className={cardStyles.iconGlow} />
             <div className={cardStyles.icon}>{icon}</div>
           </div>
-          <h3 className={cardStyles.title}>{title}</h3>
-          <p className={cardStyles.subtitle}>{subtitle}</p>
+          <h3 className={cardStyles.title}>
+            {title === 'Market Signals' && '🚨 '}
+            {title === 'Deal Intelligence' && '💎 '}
+            {title === 'Portfolio Pulse' && '📊 '}
+            {title === 'Executive Brief' && '📋 '}
+            {title}
+          </h3>
+          <p className={cardStyles.subtitle}>{primaryMetricContext}</p>
           
           {!isEmpty && (
             <>
               {/* Metric Section */}
               <div className={cardStyles.section}>
                 <p className={cardStyles.metric}>
-                  {animatedCount}
+                  {isNaN(parseInt(primaryMetric)) ? primaryMetric : animatedMetric}
                   <span className={cardStyles.metricLabel}>
-                    {title === 'Market Signals' && 'new signals'}
-                    {title === 'Deal Intelligence' && 'opportunities'}
-                    {title === 'Portfolio Pulse' && 'mentions'}
-                    {title === 'Executive Brief' && 'key insights'}
+                    {primaryMetricContext}
                   </span>
+                  {trend && (
+                    <span className={`${cardStyles.trendIndicator} ${
+                      trend.direction === 'up' ? cardStyles.trendUp : 
+                      trend.direction === 'down' ? cardStyles.trendDown : 
+                      'text-gray-400'
+                    }`}>
+                      {trend.direction === 'up' && '↑'}
+                      {trend.direction === 'down' && '↓'}
+                      {trend.direction !== 'neutral' && ` ${trend.percentage}%`}
+                    </span>
+                  )}
                 </p>
-                <p className="text-gray-500 text-xs mt-1">{getTimePeriod(lastUpdated)}</p>
+                <p className="text-gray-500 text-xs mt-1">
+                  {visualPriority === 1 ? 'Last 24h' : getTimePeriod(lastUpdated)}
+                </p>
               </div>
             
-              {/* Time Sensitive Alert with countdown */}
-              {timeSensitive && timeSensitive.isExpiring && (
+              {/* Time Sensitive Alert */}
+              {timeSensitive && (
                 <motion.div 
                   className={cardStyles.timeAlert}
                   initial={{ scale: 0.9, opacity: 0 }}
@@ -291,36 +361,46 @@ const ActionableCard = ({
                   transition={{ duration: 0.3 }}
                 >
                   <p className={cardStyles.timeAlertText}>
-                    ⚡ {timeSensitive.daysRemaining} {timeSensitive.daysRemaining === 1 ? 'day' : 'days'} until deadline
+                    {title === 'Market Signals' && '⚡ '}
+                    {title === 'Deal Intelligence' && '📅 '}
+                    {title === 'Portfolio Pulse' && '🔔 '}
+                    {title === 'Executive Brief' && '✨ '}
+                    {timeSensitive.deadline}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {timeSensitive.consequence}
                   </p>
                 </motion.div>
               )}
               
               {/* Preview List Section */}
               <div className="flex-1">
-                <p className={cardStyles.topItemsHeader}>Top Items</p>
+                <p className={cardStyles.topItemsHeader}>
+                  {title === 'Market Signals' && 'TOP SIGNALS'}
+                  {title === 'Deal Intelligence' && 'IMMEDIATE ATTENTION'}
+                  {title === 'Portfolio Pulse' && 'CRITICAL UPDATES'}
+                  {title === 'Executive Brief' && "TODAY'S ESSENTIALS"}
+                </p>
                 {contentLoaded ? (
                   <AnimatePresence mode="wait">
                     <div>
                       {topItems.slice(0, itemsToShow).map((item, index) => (
                         <motion.div 
-                          key={item.id} 
-                          className={cardStyles.topItem}
+                          key={`item-${index}`} 
+                          className={cardStyles.richItem}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <p className={cardStyles.topItemTitle}>
-                            • {item.title}
-                            {isNew(item.timestamp) && (
-                              <span className={cardStyles.newBadge}>NEW</span>
-                            )}
-                          </p>
-                          {item.source && !isMobile && (
-                            <p className={cardStyles.topItemMeta}>
-                              {item.source} · {item.timestamp ? formatTimeAgo(item.timestamp) : 'recent'}
-                            </p>
-                          )}
+                          <span className={cardStyles.richItemLabel}>
+                            {item.label}
+                          </span>
+                          <span className={cardStyles.richItemValue}>
+                            {item.value}
+                            <span 
+                              className={`${cardStyles.richItemUrgencyDot} ${getUrgencyColorClass(item.urgency)}`}
+                            />
+                          </span>
                         </motion.div>
                       ))}
                     </div>
@@ -399,15 +479,25 @@ const ActionableCard = ({
             <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-4" />
             <h3 className="text-white text-xl font-semibold mb-4">{title}</h3>
             <div className="space-y-3">
-              {topItems.map((item) => (
-                <div key={item.id} className="bg-purple-500/5 rounded-lg p-4">
-                  <p className="text-white mb-1">{item.title}</p>
-                  <p className="text-gray-400 text-sm">{item.description}</p>
-                  {item.source && (
-                    <p className="text-gray-500 text-xs mt-2">
-                      {item.source} · {item.timestamp ? formatTimeAgo(item.timestamp) : 'recent'}
-                    </p>
-                  )}
+              {topItems.map((item, index) => (
+                <div key={`mobile-item-${index}`} className="bg-purple-500/5 rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="text-gray-400 text-sm mb-1">{item.label}</p>
+                      <p className="text-white font-medium">{item.value}</p>
+                      {item.metadata && (
+                        <div className="mt-2 text-xs text-gray-500">
+                          {item.metadata.source && <span>{item.metadata.source}</span>}
+                          {item.metadata.source && item.metadata.timestamp && <span> · </span>}
+                          {item.metadata.timestamp && <span>{formatTimeAgo(item.metadata.timestamp)}</span>}
+                          {item.metadata.trend && <span className="block mt-1">{item.metadata.trend}</span>}
+                        </div>
+                      )}
+                    </div>
+                    <span 
+                      className={`${cardStyles.richItemUrgencyDot} ${getUrgencyColorClass(item.urgency)} ml-3`}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -430,41 +520,56 @@ const ActionableCard = ({
 
 export const ActionableIntelligenceCards = () => {
   // Mock data - in production this would come from your API
-  const cards: CardData[] = [
+  const cards: IntelligenceCard[] = [
     {
       icon: <TrendingUp />,
       title: "Market Signals",
-      subtitle: "Track emerging trends across VC podcasts",
-      actionText: "View All Signals →",
+      primaryMetric: "23",
+      primaryMetricContext: "new opportunities",
+      actionText: "Explore All Signals →",
       topItems: [
         {
-          id: "sig-1",
-          title: "AI Agents gaining momentum",
-          description: "300% increase in mentions across VC podcasts this month",
-          source: "All-In Pod",
-          timestamp: new Date(Date.now() - 1.5 * 60 * 60 * 1000), // 1.5 hours ago - NEW!
-          tags: ["AI", "Emerging Tech"]
+          label: "AI Agents startup raising $50M",
+          value: "3 podcasts",
+          urgency: 'critical',
+          metadata: {
+            source: "Multiple Sources",
+            timestamp: new Date(Date.now() - 1.5 * 60 * 60 * 1000),
+            trend: "High VC interest"
+          }
         },
         {
-          id: "sig-2",
-          title: "B2B SaaS valuations dropping",
-          description: "Multiple VCs discussing 40% valuation corrections",
-          source: "20VC",
-          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-          tags: ["SaaS", "Valuations"]
+          label: "Sequoia pulling back from crypto",
+          value: "All-In",
+          urgency: 'high',
+          metadata: {
+            source: "All-In Pod",
+            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
+            trend: "Major strategy shift"
+          }
         },
         {
-          id: "sig-3",
-          title: "Defense tech investment surge",
-          description: "Anduril's success sparking new defense startup interest",
-          source: "Invest Like the Best",
-          timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000), // 8 hours ago
-          tags: ["Defense", "DeepTech"]
+          label: "New B2B SaaS roll-up fund forming",
+          value: "Confirmed",
+          urgency: 'normal',
+          metadata: {
+            source: "20VC",
+            timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
+            trend: "Market consolidation"
+          }
         }
       ],
       urgency: 'high' as UrgencyLevel,
+      timeSensitive: {
+        deadline: "Action required: 2 expire today",
+        consequence: "Miss critical investment opportunities"
+      },
+      visualPriority: 2,
       lastUpdated: new Date(),
-      totalCount: 12,
+      trend: {
+        direction: 'up',
+        percentage: 18
+      },
       onClick: () => {
         console.log("Opening Market Signals view...");
         // In production: router.push('/signals?filter=trending')
@@ -473,41 +578,52 @@ export const ActionableIntelligenceCards = () => {
     {
       icon: <CircleDollarSign />,
       title: "Deal Intelligence",
-      subtitle: "Investment opportunities requiring action",
-      actionText: "Explore Deals →",
+      primaryMetric: "8",
+      primaryMetricContext: "fundable companies",
+      actionText: "View Deal Pipeline →",
       topItems: [
         {
-          id: "deal-1",
-          title: "Stealth AI startup raising $50M Series B",
-          description: "Ex-OpenAI team, Sequoia leading, closing in 2 weeks",
-          source: "All-In Pod",
-          timestamp: new Date(Date.now() - 0.5 * 60 * 60 * 1000), // 30 minutes ago - NEW!
-          tags: ["AI", "Series B", "Sequoia"]
+          label: "Acme.ai - $5M seed",
+          value: "closing next week",
+          urgency: 'critical',
+          metadata: {
+            source: "All-In Pod",
+            timestamp: new Date(Date.now() - 0.5 * 60 * 60 * 1000),
+            trend: "Strong founder, AI infrastructure"
+          }
         },
         {
-          id: "deal-2",
-          title: "Fintech roll-up strategy emerging",
-          description: "Multiple PE firms targeting distressed fintech assets",
-          source: "20VC",
-          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-          tags: ["Fintech", "M&A"]
+          label: "TechCo mentioned by 3 top VCs",
+          value: "today",
+          urgency: 'high',
+          metadata: {
+            source: "Multiple Sources",
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            trend: "Building momentum"
+          }
         },
         {
-          id: "deal-3",
-          title: "Climate tech Fund III announced",
-          description: "Lowercarbon raising $800M for hardware-focused fund",
-          source: "European VC",
-          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-          tags: ["Climate", "Fund"]
+          label: "DataStartup - Your thesis match",
+          value: "94%",
+          urgency: 'high',
+          metadata: {
+            source: "This Week in Startups",
+            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+            trend: "Perfect fit for portfolio"
+          }
         }
       ],
       urgency: 'critical' as UrgencyLevel,
       timeSensitive: {
-        deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
-        daysRemaining: 14,
-        isExpiring: true
+        deadline: "Next 48h: 3 deals closing",
+        consequence: "Limited allocation remaining"
       },
+      visualPriority: 2,
       lastUpdated: new Date(),
+      trend: {
+        direction: 'up',
+        percentage: 32
+      },
       onClick: () => {
         console.log("Opening Deal Pipeline...");
         // In production: router.push('/deals?urgency=critical')
@@ -516,72 +632,92 @@ export const ActionableIntelligenceCards = () => {
     {
       icon: <Briefcase />,
       title: "Portfolio Pulse",
-      subtitle: "Monitor your investments & competitors",
-      actionText: "View All Mentions →",
+      primaryMetric: "14",
+      primaryMetricContext: "mentions",
+      actionText: "Review Portfolio →",
       topItems: [
         {
-          id: "port-1",
-          title: "Stripe discussed on Acquired",
-          description: "Deep dive on payment infrastructure moat and expansion strategy",
-          source: "Acquired",
-          timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-          tags: ["Portfolio", "Payments"]
+          label: "PortCo A mentioned on All-In",
+          value: "negative ⚠️",
+          urgency: 'critical',
+          metadata: {
+            source: "All-In Pod",
+            timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
+            trend: "Concerns about burn rate"
+          }
         },
         {
-          id: "port-2",
-          title: "Competitor launched similar feature",
-          description: "Plaid announces direct bank payments, competing with your portfolio co",
-          source: "All-In Pod",
-          timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-          tags: ["Competition", "Alert"]
+          label: "PortCo B's competitor raised",
+          value: "$100M",
+          urgency: 'high',
+          metadata: {
+            source: "20VC",
+            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
+            trend: "Market heating up"
+          }
         },
         {
-          id: "port-3",
-          title: "Industry expert validates thesis",
-          description: "Former Uber exec discussing marketplace dynamics that support your investment",
-          source: "20VC",
-          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
-          tags: ["Validation", "Marketplace"]
+          label: "PortCo C featured in 20VC",
+          value: "positive ✓",
+          urgency: 'normal',
+          metadata: {
+            source: "20VC",
+            timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
+            trend: "Strong execution praised"
+          }
         }
       ],
       urgency: 'high' as UrgencyLevel,
+      timeSensitive: {
+        deadline: "Alert: Sentiment shift detected",
+        consequence: "3 need immediate attention"
+      },
+      visualPriority: 2,
       lastUpdated: new Date(),
-      totalCount: 3,
       onClick: () => {
         console.log("Opening Portfolio Mentions...");
         // In production: router.push('/portfolio/mentions')
       }
     },
     {
-      icon: <Zap />,
+      icon: <FileText />,
       title: "Executive Brief",
-      subtitle: "AI-powered intelligence synthesis",
-      actionText: "Generate Brief →",
+      primaryMetric: "Ready",
+      primaryMetricContext: "5 min read",
+      actionText: "Read Full Brief →",
       topItems: [
         {
-          id: "brief-1",
-          title: "Weekly VC sentiment: Cautiously optimistic",
-          description: "Deployment picking up in AI, defense, and climate sectors",
-          timestamp: new Date(),
-          tags: ["Summary", "Sentiment"]
+          label: "Market shift: AI infrastructure",
+          value: "→ Apps",
+          urgency: 'high',
+          metadata: {
+            trend: "Major pivot in VC focus"
+          }
         },
         {
-          id: "brief-2",
-          title: "Key theme: AI infrastructure plays",
-          description: "Multiple discussions on picks-and-shovels opportunities",
-          timestamp: new Date(),
-          tags: ["AI", "Infrastructure"]
+          label: "3 new unicorns in your sectors",
+          value: "today",
+          urgency: 'high',
+          metadata: {
+            trend: "Fintech, AI, Climate"
+          }
         },
         {
-          id: "brief-3",
-          title: "Action required: 2 time-sensitive opportunities",
-          description: "Series B closing soon, strategic partnership deadline Friday",
-          timestamp: new Date(),
-          tags: ["Action", "Urgent"]
+          label: "Must-know for partner meeting",
+          value: "2pm",
+          urgency: 'critical',
+          metadata: {
+            trend: "Competitive landscape update"
+          }
         }
       ],
       urgency: 'normal' as UrgencyLevel,
-      lastUpdated: new Date(Date.now() - 30 * 60 * 1000), // 30 min ago
+      timeSensitive: {
+        deadline: "Updated 2h ago",
+        consequence: "Personalized for your interests"
+      },
+      visualPriority: 2,
+      lastUpdated: new Date(Date.now() - 2 * 60 * 60 * 1000),
       onClick: () => {
         console.log("Generating Executive Brief...");
         // In production: This would trigger AI synthesis

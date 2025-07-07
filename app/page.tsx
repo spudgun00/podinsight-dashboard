@@ -1,12 +1,12 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { TrendingUp, CircleDollarSign, Briefcase, Zap } from "lucide-react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
 import { SentimentHeatmap } from "@/components/dashboard/sentiment-heatmap"
 import { FloatingAIButton } from "@/components/dashboard/floating-ai-button"
 import { EpisodeIntelligenceCards } from "@/components/intelligence/episode-intelligence-cards"
+import { ActionableIntelligenceCards } from "@/components/dashboard/actionable-intelligence-cards"
 import { IntelligenceBriefModal } from "@/components/intelligence/IntelligenceBriefModal"
 import { AllEpisodesView } from "@/components/intelligence/AllEpisodesView"
 import { useEffect, useState } from "react"
@@ -111,80 +111,7 @@ export default function DashboardPage() {
 
           {/* Actionable Intelligence Cards Section */}
           <section className="mt-12 mb-12">
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 w-full"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-            {/* What's Hot Card */}
-            <div 
-              className="group bg-[#1A1A1C] border border-white/[0.06] rounded-xl p-5 h-[100px] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-200"
-              onClick={() => console.log("View What's Hot")}
-            >
-              <div className="flex flex-col justify-between h-full">
-                <div>
-                  <div className="w-12 h-12 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.2)] group-hover:bg-red-500/25 group-hover:scale-110 transition-all duration-300">
-                    <TrendingUp className="w-5 h-5 text-red-500" />
-                  </div>
-                  <h3 className="text-white text-base font-semibold mt-3">What's Hot</h3>
-                  <p className="text-[#9CA3AF] text-sm">12 new signals today</p>
-                </div>
-                <p className="text-[#A78BFA] text-sm hover:underline">View Latest →</p>
-              </div>
-            </div>
-
-            {/* Deal Flow Card */}
-            <div 
-              className="group bg-[#1A1A1C] border border-white/[0.06] rounded-xl p-5 h-[100px] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-200"
-              onClick={() => console.log("Track Deal Flow")}
-            >
-              <div className="flex flex-col justify-between h-full">
-                <div>
-                  <div className="w-12 h-12 rounded-xl bg-green-500/15 border border-green-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.2)] group-hover:bg-green-500/25 group-hover:scale-110 transition-all duration-300">
-                    <CircleDollarSign className="w-5 h-5 text-green-500" />
-                  </div>
-                  <h3 className="text-white text-base font-semibold mt-3">Deal Flow</h3>
-                  <p className="text-[#9CA3AF] text-sm">Track investment signals</p>
-                </div>
-                <p className="text-[#A78BFA] text-sm hover:underline">Track Deals →</p>
-              </div>
-            </div>
-
-            {/* Your Portfolio Card */}
-            <div 
-              className="group bg-[#1A1A1C] border border-white/[0.06] rounded-xl p-5 h-[100px] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-200"
-              onClick={() => console.log("View Portfolio Mentions")}
-            >
-              <div className="flex flex-col justify-between h-full">
-                <div>
-                  <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.2)] group-hover:bg-purple-500/25 group-hover:scale-110 transition-all duration-300">
-                    <Briefcase className="w-5 h-5 text-purple-500" />
-                  </div>
-                  <h3 className="text-white text-base font-semibold mt-3">Your Portfolio</h3>
-                  <p className="text-[#9CA3AF] text-sm">3 mentions this week</p>
-                </div>
-                <p className="text-[#A78BFA] text-sm hover:underline">View Mentions →</p>
-              </div>
-            </div>
-
-            {/* Quick Brief Card */}
-            <div 
-              className="group bg-[#1A1A1C] border border-white/[0.06] rounded-xl p-5 h-[100px] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-200"
-              onClick={() => console.log("Generate Quick Brief")}
-            >
-              <div className="flex flex-col justify-between h-full">
-                <div>
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.2)] group-hover:bg-amber-500/25 group-hover:scale-110 transition-all duration-300">
-                    <Zap className="w-5 h-5 text-amber-500" />
-                  </div>
-                  <h3 className="text-white text-base font-semibold mt-3">Quick Brief</h3>
-                  <p className="text-[#9CA3AF] text-sm">5 min intelligence digest</p>
-                </div>
-                <p className="text-[#A78BFA] text-sm hover:underline">Generate →</p>
-              </div>
-            </div>
-            </motion.div>
+            <ActionableIntelligenceCards />
           </section>
 
           {/* Divider */}
