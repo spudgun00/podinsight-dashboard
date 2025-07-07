@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor, waitForElementToBeRemoved } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SearchCommandBar } from '../search-command-bar'
+import { SearchCommandBar } from '../search-command-bar-fixed'
 import { act } from 'react'
 
 // Mock framer-motion to avoid animation issues in tests
@@ -27,7 +27,7 @@ describe('SearchCommandBar', () => {
     if (!global.crypto) {
       global.crypto = {} as any
     }
-    global.crypto.randomUUID = jest.fn(() => 'mock-uuid-' + Math.random().toString(36).substring(2, 15))
+    global.crypto.randomUUID = jest.fn(() => `mock-uuid-${Math.random().toString(36).substring(2, 15)}`) as any
   })
 
   afterEach(() => {
