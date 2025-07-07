@@ -21,6 +21,7 @@ import { Download, ImageIcon, FileText, Link, TrendingUp } from "lucide-react"
 import { FloatingInsightCard } from "./floating-insight-card"
 import { generateValueSignals } from "@/lib/generate-value-signals"
 import { SectionHeader } from "@/components/dashboard/section-header"
+import { Spinner } from "@/components/ui/spinner"
 
 interface TopicVelocityChartProps {
   onNotablePerformerChange?: (performer: { topic: string; change: string; arrow: string; positive: boolean; data: any[]; color: string; yDomain?: [number, number] }) => void
@@ -958,9 +959,8 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
   if (isLoading) {
     return (
       <div className="bg-black/30 backdrop-blur-2xl border rounded-xl shadow-2xl shadow-purple-500/20 ring-1 ring-white/10 p-4 md:p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-700 rounded w-1/3 mb-4"></div>
-          <div className="h-[400px] bg-gray-800 rounded"></div>
+        <div className="flex flex-col items-center justify-center h-[450px]">
+          <Spinner size="lg" label="Loading velocity data..." />
         </div>
       </div>
     )

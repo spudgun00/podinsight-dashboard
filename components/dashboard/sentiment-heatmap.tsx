@@ -4,6 +4,7 @@ import React from "react"
 import { useState, useMemo } from "react"
 import { MessageSquare } from "lucide-react"
 import { SectionHeader } from "@/components/dashboard/section-header"
+import { Spinner } from "@/components/ui/spinner"
 
 interface SentimentData {
   topic: string
@@ -118,15 +119,15 @@ export function SentimentHeatmap({ data, isLoading = false, onCellClick }: Senti
 
   if (isLoading) {
     return (
-      <div className="intel-card">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-700 rounded w-1/3 mb-2"></div>
-          <div className="h-4 bg-gray-700 rounded w-1/2 mb-6"></div>
-          <div className="grid gap-1" style={{ gridTemplateColumns: `200px repeat(${weeks}, 1fr)` }}>
-            {Array.from({ length: (topics.length + 1) * (weeks + 1) }).map((_, i) => (
-              <div key={i} className="h-8 bg-gray-700 rounded"></div>
-            ))}
-          </div>
+      <div className="relative overflow-hidden" style={{
+        backgroundColor: "#1A1A1C",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)",
+        borderRadius: "16px",
+        padding: "20px"
+      }}>
+        <div className="flex flex-col items-center justify-center h-[400px]">
+          <Spinner size="lg" label="Loading sentiment data..." />
         </div>
       </div>
     )
