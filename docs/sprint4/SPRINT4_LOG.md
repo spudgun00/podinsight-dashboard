@@ -775,3 +775,112 @@ The dashboard now features:
 - Seamless integration with existing Episode Intelligence design
 
 This transformation modernizes the search experience while maintaining all existing functionality, creating a more intuitive and accessible AI-powered search interface that aligns with the premium intelligence platform vision.
+
+---
+
+## Story 4: API Integration Implementation
+
+### Session 10: Episode Intelligence API Integration
+**Date**: 2025-07-08
+**Developer**: James Gill
+**Status**: Completed
+**Duration**: ~90 minutes
+
+#### Context
+- Story 3 (Dashboard Component) was already completed with mock data
+- Story 5b (API Endpoints) was already implemented by backend team
+- Task: Connect the frontend Episode Intelligence cards to live API data
+
+#### Key Challenge
+The API returns episode-based data structure, but the UI displays card-based categories. Required creating a transformation layer to map:
+- `investable` signals → Market Signals + Deal Intelligence cards
+- `competitive` signals → Portfolio Pulse card
+- `portfolio` signals → Portfolio Pulse card
+- `sound_bite` signals → Executive Brief + Market Signals cards
+
+#### Tasks Completed
+
+1. ✅ **Created TypeScript Type System**
+   - `/types/intelligence.ts` - Defines API and UI interfaces
+   - Mapped API response structure to UI component needs
+   - Added type safety for all data transformations
+
+2. ✅ **Built Data Transformation Layer**
+   - `/utils/intelligence-transformer.ts` - Core transformation logic
+   - Implements signal categorization by type
+   - Maps confidence scores to urgency levels (critical/high/normal)
+   - Handles signal duplication for multiple cards
+
+3. ✅ **Implemented React Query Integration**
+   - `/hooks/useIntelligenceDashboard.ts` - Data fetching hook
+   - 60-second auto-refresh interval
+   - Stale-while-revalidate pattern
+   - Error handling and retry logic
+
+4. ✅ **Created API-Connected Dashboard Component**
+   - `/components/dashboard/actionable-intelligence-cards-api.tsx`
+   - Integrates all hooks and transformations
+   - Handles loading states with skeleton UI
+   - Maintains existing UI/UX from Story 3
+
+5. ✅ **Built Intelligence Brief Modal**
+   - `/components/dashboard/intelligence-brief-modal.tsx`
+   - Displays detailed episode information
+   - Implements email/Slack sharing functionality
+   - Connected to `/api/intelligence/brief/{episode_id}` endpoint
+
+6. ✅ **Set Up Infrastructure**
+   - `/providers/query-provider.tsx` - React Query provider
+   - Updated `/app/layout.tsx` with QueryProvider wrapper
+   - Created example page at `/app/dashboard-api-example/page.tsx`
+
+7. ✅ **Created Comprehensive Testing Guide**
+   - `/docs/episode-intelligence-testing-guide.md`
+   - Instructions for testing with mock data (NEXT_PUBLIC_USE_MOCK_DATA=true)
+   - Instructions for testing with live API (NEXT_PUBLIC_USE_MOCK_DATA=false)
+   - Complete troubleshooting guide
+   - Visual success indicators
+
+#### Technical Implementation Details
+
+**Signal Transformation Algorithm:**
+```typescript
+// Urgency mapping based on confidence scores
+confidence > 0.8 → critical (red, pulsing animation)
+confidence 0.6-0.8 → high (yellow)
+confidence < 0.6 → normal (green)
+```
+
+**API Endpoints Integrated:**
+1. `GET /api/intelligence/dashboard?limit=8` - Main dashboard data
+2. `GET /api/intelligence/brief/{episode_id}` - Detailed episode view
+3. `POST /api/intelligence/share` - Sharing functionality
+
+**Performance Optimizations:**
+- Client-side data transformation to reduce API load
+- React Query caching with 60-second stale time
+- Prefetch on hover for episode details
+
+#### Files Created/Modified
+- `/types/intelligence.ts` - TypeScript interfaces
+- `/utils/intelligence-transformer.ts` - Data transformation utilities
+- `/hooks/useIntelligenceDashboard.ts` - React Query hook
+- `/components/dashboard/actionable-intelligence-cards-api.tsx` - API version
+- `/components/dashboard/intelligence-brief-modal.tsx` - Detail modal
+- `/components/dashboard/intelligence-skeleton.tsx` - Loading state
+- `/providers/query-provider.tsx` - React Query setup
+- `/app/layout.tsx` - Added QueryProvider
+- `/app/dashboard-api-example/page.tsx` - Example implementation
+- `/docs/episode-intelligence-testing-guide.md` - Testing documentation
+- `/docs/episode-intelligence-integration.md` - Technical documentation
+
+#### Result
+The Episode Intelligence feature is now fully integrated with the backend API:
+- Real-time data updates every 60 seconds
+- Smooth loading states and error handling
+- Click-through to detailed episode briefs
+- Email/Slack sharing capabilities
+- Mock data flag for development/testing
+- Comprehensive documentation for developers and stakeholders
+
+The integration maintains the premium UI/UX from Story 3 while adding live data capabilities, successfully bridging the gap between the frontend component and backend API endpoints.
