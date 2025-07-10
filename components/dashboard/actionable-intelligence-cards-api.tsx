@@ -2,7 +2,7 @@
 
 import React from "react";
 import { TrendingUp, CircleDollarSign, Briefcase, Zap } from "lucide-react";
-import { useIntelligenceDashboard } from "@/hooks/useIntelligenceDashboard";
+import { useTemporaryDashboardIntelligence as useIntelligenceDashboard } from "@/hooks/useTemporaryDashboardIntelligence";
 import { IntelligenceSkeleton } from "./intelligence-skeleton";
 import { IntelligenceBriefModal } from "./intelligence-brief-modal";
 import { IntelligenceCard, TopItem } from "@/types/intelligence";

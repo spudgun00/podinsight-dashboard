@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Intelligence Cards Test</title>
+    <script>
+        async function testDashboard() {
+            const results = document.getElementById('results');
+            
+            try {
+                // Fetch the dashboard page
+                const response = await fetch('http://localhost:3001/dashboard-api-example');
+                const html = await response.text();
+                
+                // Check for key elements
+                const tests = [
+                    { name: 'Page Title', check: html.includes('Episode Intelligence Dashboard') },
+                    { name: 'Market Signals Card', check: html.includes('Market Signals') || html.includes('market') },
+                    { name: 'Deal Intelligence Card', check: html.includes('Deal Intelligence') || html.includes('deal') },
+                    { name: 'Portfolio Pulse Card', check: html.includes('Portfolio Pulse') || html.includes('portfolio') },
+                    { name: 'Executive Brief Card', check: html.includes('Executive Brief') || html.includes('brief') },
+                    { name: 'Loading State', check: html.includes('Loading') || html.includes('loading') },
+                    { name: 'Mock Data Present', check: html.includes('mock-001') || html.includes('OpenAI') || html.includes('All-In') }
+                ];
+                
+                results.innerHTML = '<h2>Dashboard Test Results:</h2>';
+                tests.forEach(test => {
+                    const status = test.check ? '✅' : '❌';
+                    results.innerHTML += `<p>${status} ${test.name}</p>`;
+                });
+                
+                // Extract some content
+                const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
+                if (titleMatch) {
+                    results.innerHTML += `<p>Found Title: ${titleMatch[1]}</p>`;
+                }
+                
+            } catch (error) {
+                results.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        window.onload = testDashboard;
+    </script>
+</head>
+<body>
+    <h1>Testing Episode Intelligence Dashboard</h1>
+    <div id="results">Loading...</div>
+    <hr>
+    <iframe src="http://localhost:3001/dashboard-api-example" width="100%" height="800" style="border: 1px solid #ccc;"></iframe>
+</body>
+</html>

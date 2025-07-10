@@ -1,12 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { APIDashboardResponse } from '@/types/intelligence';
+import { mockDashboardData } from '@/mocks/intelligence-data';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 
 /**
  * Fetch dashboard intelligence data from API
  */
 async function fetchDashboardData(): Promise<APIDashboardResponse> {
+  // Use mock data if flag is set
+  if (USE_MOCK_DATA) {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return mockDashboardData;
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/intelligence/dashboard?limit=8`, {
     method: 'GET',
     headers: {
@@ -42,6 +51,13 @@ export function useIntelligenceDashboard() {
  * Fetch detailed intelligence brief for a specific episode
  */
 export async function fetchEpisodeBrief(episodeId: string) {
+  // Use mock data if flag is set
+  if (USE_MOCK_DATA) {
+    const { mockEpisodeBrief } = await import('@/mocks/intelligence-data');
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return mockEpisodeBrief(episodeId);
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/intelligence/brief/${episodeId}`, {
     method: 'GET',
     headers: {
@@ -66,6 +82,16 @@ export async function shareEpisodeIntelligence(data: {
   include_summary: boolean;
   personal_note?: string;
 }) {
+  // Mock implementation if flag is set
+  if (USE_MOCK_DATA) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return {
+      success: true,
+      message: `Episode intelligence shared via ${data.method} to ${data.recipient}`,
+      shared_at: new Date().toISOString()
+    };
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/intelligence/share`, {
     method: 'POST',
     headers: {

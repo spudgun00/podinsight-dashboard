@@ -5,8 +5,10 @@ import { DashboardHeader } from "@/components/dashboard/header"
 import { TopicVelocityChartFullV0 } from "@/components/dashboard/topic-velocity-chart-full-v0"
 import { SentimentHeatmap } from "@/components/dashboard/sentiment-heatmap"
 import { FloatingAIButton } from "@/components/dashboard/floating-ai-button"
-import { EpisodeIntelligenceCards } from "@/components/intelligence/episode-intelligence-cards"
-import { ActionableIntelligenceCards } from "@/components/dashboard/actionable-intelligence-cards"
+import { EpisodeIntelligenceCardsAPI as EpisodeIntelligenceCards } from "@/components/intelligence/episode-intelligence-cards-api"
+// TODO: Switch back to mock version if needed for testing
+// import { ActionableIntelligenceCards } from "@/components/dashboard/actionable-intelligence-cards"
+import { ActionableIntelligenceCardsAPI as ActionableIntelligenceCards } from "@/components/dashboard/actionable-intelligence-cards-api"
 import { IntelligenceBriefModal } from "@/components/intelligence/IntelligenceBriefModal"
 import { AllEpisodesView } from "@/components/intelligence/AllEpisodesView"
 import { useEffect, useState } from "react"
@@ -82,7 +84,7 @@ export default function DashboardPage() {
   }, [])
 
   // Episode Intelligence handlers
-  const handleViewBriefClick = (episode: Episode | NewEpisode) => {
+  const handleViewBriefClick = (episode: Episode | NewEpisode | any) => {
     setSelectedEpisode(episode)
     setShowBriefModal(true)
   }

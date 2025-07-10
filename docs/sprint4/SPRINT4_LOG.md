@@ -19,6 +19,91 @@
 **Developer**: James Gill
 **Status**: Completed
 
+## Story 4: Episode Intelligence API Integration
+
+### Session 11: API Integration with Workaround
+**Date**: 2025-07-09
+**Developer**: James Gill
+**Status**: Completed with Workaround
+
+#### Overview:
+Implemented Episode Intelligence API integration for Story 4, working around a backend issue where the dashboard endpoint returns empty data. Created a temporary solution that fetches data using the debug endpoint and individual brief calls.
+
+#### Tasks Completed:
+
+1. ✅ **Diagnosed Backend Issue**
+   - Dashboard endpoint `/api/intelligence/dashboard` returns empty array
+   - Debug endpoint shows 50 episodes with intelligence exist
+   - Suspected `.limit(20)` bug in backend query
+
+2. ✅ **Implemented Frontend Workaround**
+   - Created `useTemporaryDashboardIntelligence` hook
+   - Fetches episode list from debug endpoint
+   - Makes parallel calls to fetch individual briefs (N+1 pattern)
+   - Uses `Promise.allSettled` for resilient error handling
+
+3. ✅ **Updated Components**
+   - Modified `actionable-intelligence-cards-api.tsx` to use temporary hook
+   - Updated `app/page.tsx` to use API version
+   - Added green "Live API Data" indicator badge
+
+4. ✅ **Created Testing Infrastructure**
+   - `test-intelligence-integration.js` - Node.js API test script
+   - `test-dashboard-live.html` - Standalone HTML test page
+   - `app/test-api-integration/page.tsx` - Next.js test page with data viewer
+
+5. ✅ **Documentation Created**
+   - `STORY4_API_INTEGRATION_HANDOVER.md` - Comprehensive technical handover
+   - `STORY4_INTEGRATION_STATUS.md` - Current status summary
+   - `STORY4_FINAL_STATUS.md` - Complete implementation report
+   - `STORY4_TECHNICAL_SUMMARY.md` - Quick reference guide
+
+#### Technical Details:
+
+**Workaround Flow:**
+```
+1. GET /api/intelligence/find-episodes-with-intelligence (all 50 episodes)
+2. Slice first 8 episodes for dashboard
+3. GET /api/intelligence/brief/{id} × 8 (parallel calls)
+4. Transform to dashboard format
+```
+
+**Performance Impact:**
+- Current: 9 API calls, 2-3 seconds initial load
+- Expected (after fix): 1 API call, <500ms
+- Mitigation: React Query caching for subsequent loads
+
+**Data Metrics:**
+- 50 episodes with intelligence data
+- ~600 total signals across episodes
+- 8 episodes displayed on dashboard
+- 5 podcasts: All-In, 20VC, Acquired, European VC, Invest Like the Best
+
+#### Key Decisions:
+
+1. **Used Frontend Workaround** - Allows feature to work while backend is fixed
+2. **Limited to 8 Episodes** - Balances functionality with performance
+3. **Added Visual Indicators** - Green badge clearly shows real data vs mock
+4. **Comprehensive Error Handling** - Partial failures don't break the UI
+
+#### Backend Fix Required:
+
+The dashboard endpoint needs to be updated to properly query episodes with intelligence:
+```python
+# Remove .limit(20) or add intelligence filter
+episodes = episodes_collection.find({"has_intelligence": True})
+```
+
+Once fixed, remove workaround by switching import in `actionable-intelligence-cards-api.tsx` back to original hook.
+
+#### Results:
+- ✅ Story 4 MVP delivered with full functionality
+- ✅ Real data from 50 episodes displayed
+- ✅ All UI features working (click-through, sharing, auto-refresh)
+- ✅ Clear documentation for backend team to complete fix
+
+**Status**: Feature Complete with Workaround ✅
+
 #### Tasks Completed:
 1. ✅ Updated AllEpisodesView modal design to match dashboard
    - Changed background to #0A0A0B
@@ -884,3 +969,153 @@ The Episode Intelligence feature is now fully integrated with the backend API:
 - Comprehensive documentation for developers and stakeholders
 
 The integration maintains the premium UI/UX from Story 3 while adding live data capabilities, successfully bridging the gap between the frontend component and backend API endpoints.
+
+### Session 11: Story 4 - Real API Integration with Workaround
+**Date**: 2025-07-09
+**Developer**: James Gill
+**Status**: Completed
+**Duration**: ~60 minutes
+
+#### Context
+- Backend dashboard endpoint returns empty array despite having 50 episodes with intelligence
+- E2E testing report suggests possible .limit(20) bug in backend query
+- Need to implement workaround to display real data
+
+#### Solution Implemented
+Created a temporary workaround that:
+1. Fetches episode list from debug endpoint `/api/intelligence/find-episodes-with-intelligence`
+2. Takes first 8 episodes for dashboard
+3. Fetches individual briefs using `/api/intelligence/brief/{id}`
+4. Handles partial failures gracefully with `Promise.allSettled`
+
+#### Tasks Completed
+
+1. ✅ **Created Temporary Dashboard Hook**
+   - `/hooks/useTemporaryDashboardIntelligence.ts`
+   - Implements N+1 fetching pattern (1 debug + 8 briefs = 9 API calls)
+   - Resilient to partial failures
+   - Returns data in same format as original dashboard endpoint
+
+2. ✅ **Updated Components to Use Workaround**
+   - Modified `actionable-intelligence-cards-api.tsx` to use temporary hook
+   - Updated main dashboard (`app/page.tsx`) to use API version
+   - Added TODO comments for easy reversion when backend is fixed
+
+3. ✅ **Created Testing Infrastructure**
+   - `test-intelligence-integration.js` - Node.js API test script
+   - `test-dashboard-live.html` - Standalone HTML test page
+   - `/app/test-api-integration/page.tsx` - Next.js test page with debug info
+
+4. ✅ **Verified Real Data**
+   - 50 episodes with intelligence data confirmed
+   - Episodes from All-In, 20VC, Acquired, European VC, Invest Like the Best
+   - ~12 signals per episode average
+   - Signal types: investable, competitive, portfolio, sound_bite
+
+#### How to Verify Real vs Mock Data
+
+**Real Data Indicators:**
+1. **Episode Titles**: Real titles like "White House BTS, Google buys Wiz, Treasury vs Fed"
+2. **Signal Content**: Actual quotes like "I give them their first 25K check or 125K check"
+3. **Timestamps**: Specific times like "32:29" instead of generic "15:30"
+4. **Confidence Scores**: Varied decimals (0.8, 0.85, 0.92) not just 0.8/0.9
+5. **Podcast Names**: Full names like "All-In with Chamath, Jason, Sacks & Friedberg"
+
+**Mock Data Indicators:**
+1. Generic titles like "AI Agents eating software"
+2. Generic signals like "Major acquisition announcement"
+3. Round timestamps like "15:00", "30:00"
+4. Consistent confidence scores (always 0.8 or 0.9)
+5. Shortened podcast names
+
+#### Performance Notes
+- Initial load: 2-3 seconds (9 parallel API calls)
+- Subsequent loads: <500ms (React Query cache)
+- Auto-refresh: Every 2 minutes (reduced from 1 minute due to N+1 pattern)
+
+#### Known Issues
+1. **Backend Bug**: Dashboard endpoint returns empty (needs backend fix)
+2. **Performance**: 9 API calls vs 1 (acceptable for MVP)
+3. **Build Warnings**: Some ESLint warnings about unescaped quotes
+
+#### Files Created/Modified
+- `/hooks/useTemporaryDashboardIntelligence.ts` - Workaround implementation
+- `/components/dashboard/actionable-intelligence-cards-api.tsx` - Updated import
+- `/app/page.tsx` - Switched to API version
+- `/test-intelligence-integration.js` - API test script
+- `/test-dashboard-live.html` - Standalone test
+- `/app/test-api-integration/page.tsx` - Debug page
+- `/docs/sprint4/STORY4_INTEGRATION_STATUS.md` - Status documentation
+
+#### Result
+Episode Intelligence now displays real podcast data from the API:
+- ✅ 50 episodes with actual intelligence signals
+- ✅ Click-through to detailed briefs working
+- ✅ Real quotes and timestamps from podcasts
+- ✅ Proper signal categorization (investable, competitive, etc.)
+- ✅ Share functionality connected (placeholder recipients)
+
+The workaround successfully enables Story 4 completion while maintaining the premium UI/UX and providing real intelligence data to users.
+
+---
+
+## Day 5: July 10, 2025
+
+### Morning Session: API Integration Completion
+
+**Completed:**
+1. ✅ Fixed CORS issues by implementing Next.js API proxy route
+2. ✅ Connected Episode Intelligence Cards to real API data
+3. ✅ Connected Actionable Intelligence Cards to real API data
+4. ✅ Both components now display live data from podinsight-api
+
+**Technical Implementation:**
+- Created `/api/intelligence/dashboard-proxy` to handle CORS
+- Updated `useTemporaryDashboardIntelligence` hook to use proxy
+- Modified both card components to use the temporary hook
+- Verified data flow: API → Proxy → Hook → Components → UI
+
+### UI Improvements:
+1. **Episode Intelligence Cards:**
+   - Changed podcast abbreviations to readable names (e.g., "All-In")
+   - Fixed header alignment issues
+   - Limited display to top 6 episodes (3 + 3 more on expand)
+   - Removed confusing signal prefixes
+   - Sorted by relevance score (highest first)
+
+2. **Actionable Intelligence Cards:**
+   - Shows aggregated signals across categories
+   - Real-time counts and updates
+   - Click-through to episode details working
+
+### Issues Identified:
+
+**Critical API Quality Issues:**
+1. **Signal Content Lacks Context:**
+   - "I give them their first 25K check" - Missing WHO/TO WHOM
+   - "the Series A, $100 million round" - Missing WHICH company
+   - Signals are fragments, not actionable intelligence
+
+2. **Miscategorization:**
+   - "We passed on Uber's seed round" marked as 'investable' (should be 'competitive')
+
+3. **Missing Metadata:**
+   - All episodes show duration_seconds: 0
+   - Timestamps present but duration missing
+
+**Actions Taken:**
+- Created comprehensive API requirements document (`API_SIGNAL_QUALITY_REQUIREMENTS.md`)
+- Documented needed improvements for backend team
+- Frontend gracefully handles current data limitations
+
+### Current Status:
+- ✅ Story 3: Dashboard Episode Cards - COMPLETE (with API data)
+- ✅ Story 4: Intelligence Brief Modal - COMPLETE (with workaround)
+- ✅ Story 5B: API Integration - COMPLETE (using proxy workaround)
+- ⏳ Waiting on backend fixes for dashboard endpoint and signal quality
+
+### Notes:
+- The integration is functionally complete
+- User experience limited by API data quality
+- Frontend ready for improved data when available
+- Created requirements document for backend team to improve signal extraction

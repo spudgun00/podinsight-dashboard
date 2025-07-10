@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Episode Intelligence Dashboard Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0A0A0A;
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #8B5CF6;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .episodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .episode-card {
+            background: rgba(26, 26, 28, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .episode-card:hover {
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+        }
+        .episode-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        .podcast-name {
+            font-size: 14px;
+            color: #9CA3AF;
+            margin-bottom: 12px;
+        }
+        .signal {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .signal-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .signal-type.investable {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22C55E;
+        }
+        .signal-type.competitive {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+        }
+        .signal-type.portfolio {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8B5CF6;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #9CA3AF;
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            color: #EF4444;
+        }
+        .success {
+            color: #22C55E;
+        }
+        .warning {
+            color: #F59E0B;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Episode Intelligence Dashboard - Live Test</h1>
+        
+        <div class="status" id="status">
+            <h3>Connection Status</h3>
+            <div class="loading">Testing API connection...</div>
+        </div>
+
+        <div id="content"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://podinsight-api.vercel.app';
+
+        async function testDashboard() {
+            const statusEl = document.getElementById('status');
+            const contentEl = document.getElementById('content');
+
+            try {
+                // Test 1: Check debug endpoint
+                statusEl.innerHTML = '<h3>Connection Status</h3><div>🔄 Fetching episode data...</div>';
+                
+                const debugRes = await fetch(`${API_BASE_URL}/api/intelligence/find-episodes-with-intelligence`);
+                const debugData = await debugRes.json();
+                
+                statusEl.innerHTML = `
+                    <h3>Connection Status</h3>
+                    <div class="success">✅ API Connected</div>
+                    <div>📊 Total episodes with intelligence: ${debugData.total_intelligence_docs}</div>
+                    <div>🔄 Fetching detailed briefs for top 8 episodes...</div>
+                `;
+
+                // Get top 8 episodes
+                const top8 = debugData.matches.slice(0, 8);
+                
+                // Fetch briefs
+                const briefPromises = top8.map(async (episode) => {
+                    try {
+                        const res = await fetch(`${API_BASE_URL}/api/intelligence/brief/${episode.episode_id_in_intelligence}`);
+                        return await res.json();
+                    } catch (err) {
+                        console.error(`Failed to fetch brief for ${episode.episode_id_in_intelligence}:`, err);
+                        return null;
+                    }
+                });
+
+                const briefs = await Promise.all(briefPromises);
+                const validBriefs = briefs.filter(b => b !== null);
+
+                statusEl.innerHTML = `
+                    <h3>Connection Status</h3>
+                    <div class="success">✅ API Connected</div>
+                    <div>📊 Episodes loaded: ${validBriefs.length}/8</div>
+                    <div class="warning">⚠️ Using workaround due to dashboard endpoint bug</div>
+                `;
+
+                // Display episodes
+                let html = '<h2>Episode Intelligence Cards</h2><div class="episodes-grid">';
+                
+                validBriefs.forEach(episode => {
+                    const topSignals = episode.signals.slice(0, 3);
+                    
+                    html += `
+                        <div class="episode-card">
+                            <div class="episode-title">${episode.title}</div>
+                            <div class="podcast-name">${episode.podcast_name}</div>
+                            <div style="margin-top: 12px;">
+                                <strong>Top Signals (${episode.signals.length} total):</strong>
+                            </div>
+                            ${topSignals.map(signal => `
+                                <div class="signal">
+                                    <span class="signal-type ${signal.type}">${signal.type.toUpperCase()}</span>
+                                    <div>${signal.content}</div>
+                                    <div style="color: #6B7280; font-size: 11px; margin-top: 4px;">
+                                        @ ${signal.timestamp} • Confidence: ${(signal.confidence * 100).toFixed(0)}%
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${episode.signals.length > 3 ? `
+                                <div style="text-align: center; color: #9CA3AF; font-size: 12px; margin-top: 8px;">
+                                    +${episode.signals.length - 3} more signals
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                contentEl.innerHTML = html;
+
+            } catch (error) {
+                statusEl.innerHTML = `
+                    <h3>Connection Status</h3>
+                    <div class="error">❌ Error: ${error.message}</div>
+                `;
+                console.error('Test failed:', error);
+            }
+        }
+
+        // Run test on page load
+        testDashboard();
+    </script>
+</body>
+</html>

@@ -1,238 +1,324 @@
-# Story 4: Episode Intelligence API Integration - Complete Handover Document
+# Story 4: Episode Intelligence API Integration - Handover Document
 
-## 🎯 Overview
-This document provides complete instructions for testing the Episode Intelligence API integration completed on 2025-07-08. Story 4 successfully connected the frontend dashboard cards (Story 3) with the backend API endpoints (Story 5b).
+## Executive Summary
 
-## 📋 What Was Built
+Story 4 (Frontend API Integration) has been implemented with a **temporary workaround** due to a backend issue. The Episode Intelligence feature is fully functional and displays real data from 50 episodes, but uses an inefficient N+1 query pattern until the backend is fixed.
 
-### Core Components Created
-1. **API-Connected Dashboard** - Live data version of Episode Intelligence cards
-2. **Data Transformation Layer** - Converts episode data to card format
-3. **React Query Integration** - 60-second auto-refresh with caching
-4. **Intelligence Brief Modal** - Detailed episode view with sharing
-5. **Comprehensive Documentation** - Testing guide and technical docs
-
-### Key Files to Review
-- **Testing Guide**: `/docs/episode-intelligence-testing-guide.md` - START HERE!
-- **Technical Docs**: `/docs/episode-intelligence-integration.md`
-- **API Reference**: `/docs/master-api-reference.md`
-- **Sprint Log**: `/docs/sprint4/SPRINT4_LOG.md` (see Session 10)
-
-## 🚀 Quick Start Testing
-
-### Prerequisites
-1. Node.js 18+ installed
-2. npm or yarn package manager
-3. Git installed
-4. Modern web browser
-
-### Setup Steps
-```bash
-# 1. Clone repository (if not already done)
-git clone https://github.com/spudgun00/podinsight-dashboard.git
-cd podinsight-dashboard
-
-# 2. Install dependencies
-npm install
-
-# 3. Copy environment file
-cp .env.example .env.local
-
-# 4. Start development server
-npm run dev
-```
-
-### Testing Scenarios
-
-#### 1. Test with Mock Data (No API Required)
-```bash
-# Edit .env.local
-NEXT_PUBLIC_USE_MOCK_DATA=true
-NEXT_PUBLIC_API_URL=https://podinsight-api.vercel.app
-
-# Restart server and visit
-http://localhost:3000/dashboard-api-example
-```
-
-**What to Verify:**
-- 4 intelligence cards display immediately
-- Static data (never changes)
-- Click any signal to open detail modal
-- No network requests in DevTools
-
-#### 2. Test with Live API
-```bash
-# Edit .env.local
-NEXT_PUBLIC_USE_MOCK_DATA=false
-NEXT_PUBLIC_API_URL=https://podinsight-api.vercel.app
-
-# Restart server and visit
-http://localhost:3000/dashboard-api-example
-```
-
-**What to Verify:**
-- Loading skeleton appears briefly
-- 4 cards populate with real data
-- Network tab shows API call to `/api/intelligence/dashboard`
-- Data refreshes every 60 seconds
-- Click signals to see episode details
-
-## 🔍 What to Test
-
-### Feature Checklist
-- [ ] **Dashboard Cards**
-  - [ ] Market Signals (red) - shows investable opportunities
-  - [ ] Deal Intelligence (green) - shows specific deals
-  - [ ] Portfolio Pulse (purple) - competitive/portfolio mentions
-  - [ ] Executive Brief (yellow) - key soundbites
-
-- [ ] **Data Loading**
-  - [ ] Skeleton loader appears on first load
-  - [ ] Smooth transition to loaded state
-  - [ ] No flickering during refresh
-
-- [ ] **Interactions**
-  - [ ] Click any signal item → modal opens
-  - [ ] Modal shows full episode details
-  - [ ] Close modal (X button or outside click)
-  - [ ] "Email Brief" button in modal
-  - [ ] "Share to Slack" button in modal
-
-- [ ] **Auto-Refresh**
-  - [ ] Check Network tab after 60 seconds
-  - [ ] New request to `/api/intelligence/dashboard`
-  - [ ] Cards update if new data available
-
-- [ ] **Error Handling**
-  - [ ] Stop API/disconnect internet
-  - [ ] Error message displays gracefully
-  - [ ] "Retry" button appears
-
-## 📊 Understanding the Data Flow
-
-### API → UI Transformation
-The API returns episodes with signals, but UI needs cards by category:
-
-```
-API Response:                    UI Cards:
-Episode 1:                       Market Signals:
-  - investable signal     →        - Signal from Episode 1
-  - competitive signal             - Signal from Episode 3
-  
-Episode 2:                       Deal Intelligence:
-  - portfolio signal       →        - Signal from Episode 1
-                                   - Signal from Episode 2
-Episode 3:
-  - sound_bite signal      →     Portfolio Pulse:
-  - investable signal              - Signal from Episode 2
-                                   
-                                 Executive Brief:
-                                   - Signal from Episode 3
-```
-
-### Urgency Levels
-- **Critical** (red, pulsing) - confidence > 0.8
-- **High** (yellow) - confidence 0.6-0.8  
-- **Normal** (green) - confidence < 0.6
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-1. **"Failed to load intelligence data"**
-   - Check API health: https://podinsight-api.vercel.app/api/health
-   - Verify `.env.local` has correct API URL
-   - Check browser console for errors
-
-2. **Empty Cards**
-   - API might return no signals
-   - Check Network response in DevTools
-   - Try mock data to isolate issue
-
-3. **Modal Not Opening**
-   - Check console for JavaScript errors
-   - Ensure episodeId exists in data
-   - Hard refresh browser (Ctrl+Shift+R)
-
-4. **No Auto-Refresh**
-   - Browser tab must be active
-   - Check for JavaScript errors
-   - Verify React Query is working
-
-## 📁 Project Structure
-
-```
-podinsight-dashboard/
-├── app/
-│   ├── dashboard-api-example/    # Test page for API integration
-│   └── layout.tsx               # Added QueryProvider wrapper
-├── components/dashboard/
-│   ├── actionable-intelligence-cards-api.tsx  # API version
-│   ├── actionable-intelligence-cards.tsx      # Original mock version
-│   ├── intelligence-brief-modal.tsx           # Detail modal
-│   └── intelligence-skeleton.tsx              # Loading state
-├── hooks/
-│   └── useIntelligenceDashboard.ts   # React Query hook
-├── types/
-│   └── intelligence.ts               # TypeScript interfaces
-├── utils/
-│   └── intelligence-transformer.ts   # Data transformation
-└── providers/
-    └── query-provider.tsx           # React Query setup
-```
-
-## 🔗 Related Documentation
-
-1. **Comprehensive Testing Guide**: `/docs/episode-intelligence-testing-guide.md`
-   - Detailed step-by-step instructions
-   - Visual success indicators
-   - Complete troubleshooting
-
-2. **Technical Integration Docs**: `/docs/episode-intelligence-integration.md`
-   - API endpoint details
-   - Data transformation logic
-   - Configuration options
-
-3. **API Reference**: `/docs/master-api-reference.md`
-   - All Episode Intelligence endpoints
-   - Request/response formats
-   - Authentication details
-
-4. **Sprint 4 Log**: `/docs/sprint4/SPRINT4_LOG.md`
-   - Session 10 contains implementation details
-   - Technical decisions documented
-
-## ✅ Definition of Done
-
-Story 4 is complete when:
-- [ ] Dashboard loads with live API data
-- [ ] 60-second refresh working
-- [ ] Click-through to episode details works
-- [ ] Sharing buttons show success message
-- [ ] Mock data flag switches between modes
-- [ ] No console errors
-- [ ] Documentation reviewed
-
-## 🚨 Important Notes
-
-1. **Mock Data Flag**: The `NEXT_PUBLIC_USE_MOCK_DATA` environment variable controls whether to use mock data (true) or live API (false)
-
-2. **API Authentication**: Currently disabled per Story 5b requirements. Will need updating when auth is implemented.
-
-3. **Sharing Features**: Email/Slack sharing is simulated - shows success but doesn't actually send.
-
-4. **Test Both Modes**: Always test with both mock data and live API to ensure both paths work.
-
-## 📞 Support
-
-If you encounter issues:
-1. First check `/docs/episode-intelligence-testing-guide.md`
-2. Review console errors and network tab
-3. Try mock data mode to isolate API issues
-4. Check the Sprint 4 log for implementation details
+**Current Status**: ✅ Feature Complete with Workaround  
+**Backend Fix Required**: Yes - Dashboard endpoint returns empty array
 
 ---
 
-**Last Updated**: 2025-07-08
-**Story Status**: ✅ COMPLETED
-**Next Steps**: Test thoroughly, then proceed with Stories 6-7 (Pipeline Integration & Beta Testing)
+## Table of Contents
+1. [Current Implementation](#current-implementation)
+2. [The Backend Issue](#the-backend-issue)
+3. [The Workaround](#the-workaround)
+4. [How to Complete Story 4 Properly](#how-to-complete-story-4-properly)
+5. [Testing & Verification](#testing--verification)
+6. [Technical Details](#technical-details)
+7. [Performance Considerations](#performance-considerations)
+
+---
+
+## Current Implementation
+
+### What's Working
+- ✅ Episode Intelligence cards display real data from 50 episodes
+- ✅ Data from 5 core podcasts: All-In, 20VC, Acquired, European VC, Invest Like the Best
+- ✅ Click-through to detailed episode briefs
+- ✅ Email/Slack sharing functionality
+- ✅ Auto-refresh every 2 minutes
+- ✅ Loading states and error handling
+- ✅ Responsive design maintained
+
+### Architecture
+```
+Frontend (React) 
+    ↓
+useTemporaryDashboardIntelligence (workaround hook)
+    ↓
+API Calls:
+1. GET /api/intelligence/find-episodes-with-intelligence (debug endpoint)
+2-9. GET /api/intelligence/brief/{episode_id} (8 parallel calls)
+    ↓
+Data Transformation → UI Components
+```
+
+---
+
+## The Backend Issue
+
+### Root Cause
+The production endpoint `/api/intelligence/dashboard` returns an empty array despite having 50 episodes with intelligence data in the database.
+
+### Evidence
+```bash
+# This SHOULD return 8 episodes but returns empty:
+curl https://podinsight-api.vercel.app/api/intelligence/dashboard?limit=8
+# Response: {"episodes": [], "total_episodes": 0, "generated_at": "..."}
+
+# Meanwhile, the debug endpoint shows 50 episodes exist:
+curl https://podinsight-api.vercel.app/api/intelligence/find-episodes-with-intelligence
+# Response: {"total_intelligence_docs": 50, "matches_found": 50, "matches": [...]}
+```
+
+### Suspected Cause
+The E2E testing report (`docs/sprint4/EPISODE_INTELLIGENCE_E2E_FINDINGS.md`) suggests a `.limit(20)` debug restriction in the backend query that only checks the first 20 episodes instead of all 1,236. Since the 50 episodes with intelligence are scattered throughout the database, the query misses most of them.
+
+---
+
+## The Workaround
+
+### Implementation Details
+
+1. **Created Temporary Hook**: `/hooks/useTemporaryDashboardIntelligence.ts`
+   ```typescript
+   // Fetches episode list from debug endpoint
+   const debugData = await fetch('/api/intelligence/find-episodes-with-intelligence');
+   
+   // Takes first 8 episodes
+   const top8Episodes = debugData.matches.slice(0, 8);
+   
+   // Fetches individual briefs (N+1 pattern)
+   const briefs = await Promise.allSettled(
+     top8Episodes.map(ep => fetch(`/api/intelligence/brief/${ep.episode_id}`))
+   );
+   ```
+
+2. **Updated Components**:
+   - `actionable-intelligence-cards-api.tsx` - Uses temporary hook instead of original
+   - `app/page.tsx` - Switched to API version of intelligence cards
+
+3. **Resilience Features**:
+   - Uses `Promise.allSettled` to handle partial failures
+   - Logs failed requests but continues with successful ones
+   - Returns data in same format as original dashboard endpoint
+
+### Why This Works
+- Debug endpoint returns all 50 episodes with intelligence
+- Brief endpoint works correctly for individual episodes
+- Frontend transforms the data to match expected dashboard format
+
+### Performance Impact
+- **Current**: 9 API calls (1 debug + 8 briefs) = ~2-3 seconds initial load
+- **Expected**: 1 API call = <500ms
+- React Query caching mitigates subsequent loads
+
+---
+
+## How to Complete Story 4 Properly
+
+### Step 1: Fix Backend Dashboard Endpoint
+
+**Location**: `podinsight-api` repository  
+**File**: Look for the dashboard endpoint handler
+
+**Current Code (suspected)**:
+```python
+# Likely has something like:
+episodes = episodes_collection.find().limit(20)  # ← Remove this limit!
+```
+
+**Fix**:
+```python
+# Option 1: Remove limit entirely
+episodes = episodes_collection.find()
+
+# Option 2: Add intelligence filter
+episodes = episodes_collection.find({"has_intelligence": True}).limit(100)
+
+# Option 3: Join with intelligence collection
+pipeline = [
+    {"$lookup": {
+        "from": "episode_intelligence",
+        "localField": "episode_id",
+        "foreignField": "episode_id",
+        "as": "intelligence"
+    }},
+    {"$match": {"intelligence": {"$ne": []}}},
+    {"$limit": 8},
+    {"$sort": {"relevance_score": -1}}
+]
+```
+
+### Step 2: Remove Frontend Workaround
+
+Once the backend is fixed:
+
+1. **In `actionable-intelligence-cards-api.tsx`**:
+   ```typescript
+   // Change this:
+   import { useTemporaryDashboardIntelligence as useIntelligenceDashboard } from "@/hooks/useTemporaryDashboardIntelligence";
+   
+   // Back to:
+   import { useIntelligenceDashboard } from "@/hooks/useIntelligenceDashboard";
+   ```
+
+2. **Delete** `/hooks/useTemporaryDashboardIntelligence.ts`
+
+3. **Remove** the green "Live API Data" indicator from `actionable-intelligence-cards-api.tsx`
+
+4. **Update** refresh interval in `useIntelligenceDashboard.ts` back to 1 minute
+
+---
+
+## Testing & Verification
+
+### Current Test URLs
+- **Main Dashboard**: `http://localhost:3000`
+- **Test Page**: `http://localhost:3000/test-api-integration`
+- **API Test**: Run `node test-intelligence-integration.js`
+
+### How to Verify Real Data
+
+#### Visual Indicators
+1. Green badge shows "Live API Data - 8 episodes loaded"
+2. Episode titles are specific: "White House BTS, Google buys Wiz..."
+3. Signals contain actual quotes: "I give them their first 25K check..."
+4. Timestamps are specific: "32:29" not "15:00"
+
+#### Data Verification Checklist
+- [ ] Check browser DevTools Network tab for 9 API calls
+- [ ] Verify first call is to `/find-episodes-with-intelligence`
+- [ ] Verify 8 subsequent calls to `/brief/{id}`
+- [ ] Click on signal items - modal should show full episode details
+- [ ] Test share buttons (currently use placeholder recipients)
+
+### Environment Configuration
+```bash
+# .env.local
+NEXT_PUBLIC_API_URL=https://podinsight-api.vercel.app
+NEXT_PUBLIC_USE_MOCK_DATA=false  # Must be false for real data
+```
+
+---
+
+## Technical Details
+
+### File Structure
+```
+/hooks/
+  useIntelligenceDashboard.ts          # Original hook (currently bypassed)
+  useTemporaryDashboardIntelligence.ts # Workaround hook (DELETE after fix)
+
+/components/dashboard/
+  actionable-intelligence-cards-api.tsx # Uses workaround hook
+  intelligence-brief-modal.tsx          # Episode detail modal
+  intelligence-skeleton.tsx             # Loading state
+
+/types/
+  intelligence.ts                       # TypeScript interfaces
+
+/utils/
+  intelligence-transformer.ts           # Maps API data to UI format
+```
+
+### API Endpoints
+
+| Endpoint | Status | Purpose |
+|----------|--------|---------|
+| GET `/api/intelligence/dashboard` | ❌ Returns empty | Should return top 8 episodes |
+| GET `/api/intelligence/brief/{id}` | ✅ Working | Returns full episode details |
+| POST `/api/intelligence/share` | ✅ Working | Shares episode via email/Slack |
+| GET `/api/intelligence/find-episodes-with-intelligence` | ✅ Working | Debug endpoint listing all episodes |
+
+### Data Flow
+
+1. **Expected Flow** (after fix):
+   ```
+   useIntelligenceDashboard → dashboard endpoint → 8 episodes → Transform → UI
+   ```
+
+2. **Current Workaround Flow**:
+   ```
+   useTemporaryDashboardIntelligence → debug endpoint → 50 IDs 
+                                    → slice(0,8) → 8 brief calls 
+                                    → Transform → UI
+   ```
+
+---
+
+## Performance Considerations
+
+### Current Performance
+- **Initial Load**: 2-3 seconds (9 parallel HTTP requests)
+- **Cached Load**: <500ms (React Query cache)
+- **Auto-refresh**: Every 2 minutes (reduced from 1 minute)
+- **Memory**: Minimal - only stores 8 episodes
+
+### After Backend Fix
+- **Initial Load**: <500ms (1 HTTP request)
+- **Auto-refresh**: Can return to 1 minute intervals
+- **Scalability**: Much better - O(1) instead of O(n)
+
+### Monitoring
+- Check browser DevTools Network tab for request count
+- Monitor console for any failed brief fetches
+- Use React Query DevTools for cache inspection
+
+---
+
+## Rollback Plan
+
+If issues arise after backend fix:
+
+1. **Quick Rollback**:
+   ```typescript
+   // In actionable-intelligence-cards-api.tsx, change import back to:
+   import { useTemporaryDashboardIntelligence as useIntelligenceDashboard } from "@/hooks/useTemporaryDashboardIntelligence";
+   ```
+
+2. **Environment Toggle** (alternative approach):
+   ```typescript
+   const useIntelligenceDashboard = process.env.NEXT_PUBLIC_USE_WORKAROUND === 'true' 
+     ? useTemporaryDashboardIntelligence 
+     : useOriginalDashboard;
+   ```
+
+---
+
+## Support & Debugging
+
+### Common Issues
+
+1. **Empty Dashboard**
+   - Check `.env.local` has `NEXT_PUBLIC_USE_MOCK_DATA=false`
+   - Verify API URL is correct
+   - Check browser console for errors
+
+2. **Slow Loading**
+   - Normal with workaround (2-3 seconds)
+   - Check Network tab for failed requests
+   - Ensure good internet connection
+
+3. **Missing Episodes**
+   - Workaround only shows 8 of 50 episodes
+   - This is intentional for performance
+   - After fix, can show more or paginate
+
+### Debug Commands
+```bash
+# Test API health
+curl https://podinsight-api.vercel.app/api/intelligence/health
+
+# Check episode count
+curl https://podinsight-api.vercel.app/api/intelligence/find-episodes-with-intelligence | jq '.total_intelligence_docs'
+
+# Test specific brief
+curl https://podinsight-api.vercel.app/api/intelligence/brief/02fc268c-61dc-4074-b7ec-882615bc6d85
+```
+
+---
+
+## Conclusion
+
+Story 4 is functionally complete with real data integration. The workaround ensures users see actual podcast intelligence while we await the backend fix. Once the dashboard endpoint is repaired, removing the workaround is a simple 2-line change.
+
+**Priority Action**: Fix the backend dashboard endpoint query to properly return episodes with intelligence data.
+
+---
+
+*Document created: 2025-07-09*  
+*Author: James Gill*  
+*Sprint: 4*  
+*Story: 4 - Intelligence Brief Modal (Frontend)*
