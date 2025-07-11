@@ -14,6 +14,30 @@ import {
 } from "lucide-react"
 import { searchCache } from "@/lib/search-cache"
 
+// Pre-warming constants
+const PREWARM_COOLDOWN_MS = 3 * 60 * 1000 // 3 minutes
+const LAST_PREWARM_KEY = 'lastSearchPrewarmTime'
+
+// Pre-warm API function - calls backend directly
+async function callPrewarmApi() {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://podinsight-api.vercel.app'
+    const response = await fetch(`${apiUrl}/api/prewarm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    if (!response.ok) {
+      console.error(`Prewarm failed: ${response.status}`)
+      return false
+    }
+    console.log('Search prewarm successful')
+    return true
+  } catch (error) {
+    console.error('Error during prewarm:', error)
+    return false
+  }
+}
+
 interface AISearchModalEnhancedProps {
   isOpen: boolean
   onClose: () => void
@@ -146,6 +170,7 @@ export function AISearchModalEnhanced({ isOpen, onClose }: AISearchModalEnhanced
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
   const coldStartTimeoutRef = useRef<NodeJS.Timeout>()
   const abortControllerRef = useRef<AbortController | null>(null)
+  const lastPrewarmTimestampRef = useRef<number>(0)
 
   // Focus input when modal opens
   useEffect(() => {
@@ -160,6 +185,35 @@ export function AISearchModalEnhanced({ isOpen, onClose }: AISearchModalEnhanced
       setError(null)
       setHasSearched(false)
       setIsLoading(false)
+    }
+  }, [isOpen])
+
+  // Pre-warming effect
+  useEffect(() => {
+    // Initialize from sessionStorage on first render
+    if (lastPrewarmTimestampRef.current === 0 && typeof window !== 'undefined') {
+      const storedTime = sessionStorage.getItem(LAST_PREWARM_KEY)
+      if (storedTime) {
+        lastPrewarmTimestampRef.current = parseInt(storedTime, 10)
+      }
+    }
+
+    if (isOpen) {
+      const currentTime = Date.now()
+      
+      if (currentTime - lastPrewarmTimestampRef.current > PREWARM_COOLDOWN_MS) {
+        console.log('Search modal opened. Pre-warming backend...')
+        callPrewarmApi().then(success => {
+          if (success) {
+            const newTimestamp = Date.now()
+            sessionStorage.setItem(LAST_PREWARM_KEY, newTimestamp.toString())
+            lastPrewarmTimestampRef.current = newTimestamp
+          }
+        })
+      } else {
+        const remainingSeconds = Math.ceil((PREWARM_COOLDOWN_MS - (currentTime - lastPrewarmTimestampRef.current)) / 1000)
+        console.log(`Prewarm cooldown active. Next in ${remainingSeconds}s`)
+      }
     }
   }, [isOpen])
 
