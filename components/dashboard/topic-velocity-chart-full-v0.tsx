@@ -15,6 +15,7 @@ import {
   ReferenceDot,
 } from "recharts"
 import { fetchTopicVelocity, fetchTopicSignals } from "@/lib/api"
+import { useDataMode } from "@/contexts/DataModeContext"
 import { DEFAULT_TOPICS, TOPIC_COLORS } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { Download, ImageIcon, FileText, Link, TrendingUp } from "lucide-react"
@@ -166,6 +167,7 @@ const customStyles = `
 `
 
 export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelocityChartProps) {
+  const { isLiveData } = useDataMode();
   const [viewMode, setViewMode] = useState<"timeRange" | "quarters">("timeRange")
   const [selectedTimeRange, setSelectedTimeRange] = useState<"1M" | "3M" | "6M">("3M")
   const [selectedQuarter, setSelectedQuarter] = useState<"Q1" | "Q2" | "Q3" | "Q4">("Q2")
@@ -628,7 +630,53 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
         setIsLoading(true)
         setError(null)
         
-        // Fetch data for all time ranges and quarterly data in parallel
+        // Check if we're in demo mode
+        if (!isLiveData) {
+          // Use mock data for demo mode
+          const { mockTopicVelocityData, mockPreviousQuarterData } = await import('@/mocks/topic-velocity-data');
+          
+          // Process mock data for different time ranges
+          const processedData: { [key: string]: any[] } = {
+            "1M": processApiResponse(mockTopicVelocityData).slice(-4), // Last 4 weeks
+            "3M": processApiResponse(mockTopicVelocityData), // All 12 weeks
+            "6M": processApiResponse(mockTopicVelocityData), // Same data for demo
+            "year": processApiResponse(mockTopicVelocityData) // Same data for demo
+          }
+          
+          setAllData(processedData)
+          
+          // Set initial data based on view mode
+          if (viewMode === "quarters") {
+            const currentYear = new Date().getFullYear()
+            const currentQuarterData = filterDataByQuarter(processedData.year, selectedQuarter, currentYear)
+            setData(currentQuarterData)
+            setDisplayData(currentQuarterData)
+          } else {
+            setData(processedData[selectedTimeRange])
+            setDisplayData(processedData[selectedTimeRange])
+          }
+          
+          // Calculate initial statistics
+          const stats = calculateStats(processedData[selectedTimeRange])
+          setStatistics(stats)
+          
+          // Use mock previous quarter data
+          setPreviousData(mockPreviousQuarterData)
+          
+          // Generate value signals
+          const signals = generateValueSignals(processedData["3M"])
+          setValueSignals(signals)
+          
+          // Generate demo insights
+          const trends = calculateTrends(processedData["6M"])
+          const stats6M = calculateStats(processedData["6M"])
+          setInsights(generateInsights(processedData["6M"], trends, stats6M))
+          
+          setIsLoading(false)
+          return; // Exit early for demo mode
+        }
+        
+        // Fetch data for all time ranges and quarterly data in parallel (LIVE MODE)
         const [data1M, data3M, data6M, dataYear] = await Promise.all([
           fetchTopicVelocity(4, DEFAULT_TOPICS),
           fetchTopicVelocity(12, DEFAULT_TOPICS),
@@ -702,7 +750,7 @@ export function TopicVelocityChartFullV0({ onNotablePerformerChange }: TopicVelo
     }
     
     preloadAllData()
-  }, []) // Only run once on mount
+  }, [isLiveData]) // Re-run when demo mode changes
 
   
   // Calculate statistics based on displayed data

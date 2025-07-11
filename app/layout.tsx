@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";
+import { DataModeProvider } from "@/contexts/DataModeContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,7 +20,9 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-[#0A0A0A] text-white`}>
         <QueryProvider>
-          {children}
+          <DataModeProvider>
+            {children}
+          </DataModeProvider>
         </QueryProvider>
       </body>
     </html>

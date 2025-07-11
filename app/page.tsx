@@ -12,7 +12,8 @@ import { ActionableIntelligenceCardsAPI as ActionableIntelligenceCards } from "@
 import { IntelligenceBriefModal } from "@/components/intelligence/IntelligenceBriefModal"
 import { AllEpisodesView } from "@/components/intelligence/AllEpisodesView"
 import { useEffect, useState } from "react"
-import { fetchSentimentAnalysis, type SentimentData } from "@/lib/api"
+import { type SentimentData } from "@/lib/api"
+import { useSentimentAnalysis } from "@/hooks/useSentimentAnalysis"
 import type { Episode } from "@/lib/mock-episode-data"
 import type { NewEpisode } from "@/lib/new-mock-episode-data"
 import { getDetailedEpisode } from "@/lib/mock-brief-data"
@@ -47,34 +48,14 @@ export default function DashboardPage() {
     arrow: string
     positive: boolean
   } | null>(null)
-  const [sentimentData, setSentimentData] = useState<SentimentData[]>([])
-  const [isLoadingSentiment, setIsLoadingSentiment] = useState(true)
+  // Use the sentiment analysis hook with demo mode support
+  const { data: sentimentResponse, isLoading: isLoadingSentiment } = useSentimentAnalysis(12);
+  const sentimentData = sentimentResponse?.data || [];
   
   // Episode Intelligence state
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | NewEpisode | null>(null)
   const [showAllEpisodes, setShowAllEpisodes] = useState(false)
   const [showBriefModal, setShowBriefModal] = useState(false)
-  
-  // Fetch sentiment data from API with default 3M range
-  useEffect(() => {
-    const fetchSentiment = async () => {
-      setIsLoadingSentiment(true)
-      try {
-        const weeks = 12 // Default to 3M
-        
-        const response = await fetchSentimentAnalysis(weeks)
-        if (response.success && response.data) {
-          setSentimentData(response.data)
-        }
-      } catch (error) {
-        console.error("Failed to fetch sentiment data:", error)
-      } finally {
-        setIsLoadingSentiment(false)
-      }
-    }
-    
-    fetchSentiment()
-  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {

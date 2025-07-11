@@ -1,3 +1,5 @@
+import { APIDashboardResponse } from '@/types/intelligence';
+
 // Mock API data for testing the search command bar
 export const dummySearchData: Record<string, any> = {
   "AI agents": {
@@ -180,4 +182,150 @@ export async function mockPerformSearchWithColdStart(query: string): Promise<any
   await new Promise(resolve => setTimeout(resolve, delay))
   
   return mockPerformSearch(query)
+}
+
+// Generate mock dashboard response for demo mode
+export function generateMockDashboardResponse(): APIDashboardResponse {
+  const now = new Date();
+  const episodes = [
+    {
+      episode_id: "ep175-allin",
+      title: "E175: State of the Union, AI agents, commercial real estate doom loop, Israel/Gaza & more",
+      podcast_name: "All-In Podcast",
+      published_at: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+      duration_seconds: 5400,
+      relevance_score: 0.95,
+      signals: [
+        {
+          type: "investable" as const,
+          content: "AI agents represent a $100B+ market opportunity with major players racing to build autonomous systems",
+          confidence: 0.92,
+          timestamp: 1290
+        },
+        {
+          type: "competitive" as const,
+          content: "Microsoft and Google are in an arms race for AI agent dominance, with both investing billions",
+          confidence: 0.88,
+          timestamp: 1890
+        }
+      ],
+      summary: "Deep dive into AI agents as the next computing paradigm, with insights on market sizing and competitive dynamics",
+      key_insights: [
+        "AI agents will fundamentally change how we interact with computers",
+        "The market opportunity could exceed $100B by 2030",
+        "Microsoft has a lead but Google is catching up fast"
+      ],
+      audio_url: null
+    },
+    {
+      episode_id: "20vc-funding-2024",
+      title: "The State of Venture Funding in 2024",
+      podcast_name: "20VC",
+      published_at: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+      duration_seconds: 3600,
+      relevance_score: 0.89,
+      signals: [
+        {
+          type: "portfolio" as const,
+          content: "Stripe mentioned as category leader in payments infrastructure, valued at $50B+",
+          confidence: 0.95,
+          timestamp: 890
+        },
+        {
+          type: "sound_bite" as const,
+          content: "Valuations have normalized - we're back to 2019 levels which is healthy for the ecosystem",
+          confidence: 0.85,
+          timestamp: 1456
+        }
+      ],
+      summary: "Analysis of current venture funding environment with focus on valuation corrections and emerging opportunities",
+      key_insights: [
+        "Valuations have corrected 40-60% from 2021 peaks",
+        "Quality companies are still getting funded at reasonable valuations",
+        "AI and climate tech are the only sectors seeing valuation inflation"
+      ],
+      audio_url: null
+    },
+    {
+      episode_id: "acquired-nvidia-p3",
+      title: "The NVIDIA Trilogy (Part III): The Future of Computing",
+      podcast_name: "Acquired",
+      published_at: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(), // 18 hours ago
+      duration_seconds: 7200,
+      relevance_score: 0.91,
+      signals: [
+        {
+          type: "investable" as const,
+          content: "The next $1T opportunity is in AI infrastructure - picks and shovels for the AI gold rush",
+          confidence: 0.90,
+          timestamp: 3400
+        }
+      ],
+      summary: "Comprehensive analysis of NVIDIA's dominance and the future of AI computing infrastructure",
+      key_insights: [
+        "NVIDIA has a 5-year lead in AI hardware that's nearly impossible to catch",
+        "The real opportunity is in the application layer built on top of AI infrastructure",
+        "We're still in the first inning of the AI revolution"
+      ],
+      audio_url: null
+    },
+    {
+      episode_id: "lex-sama-401",
+      title: "#401 - Demis Hassabis: DeepMind, AlphaFold, and the Future of AI",
+      podcast_name: "Lex Fridman Podcast",
+      published_at: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+      duration_seconds: 9000,
+      relevance_score: 0.88,
+      signals: [
+        {
+          type: "sound_bite" as const,
+          content: "AGI is closer than most people think - we could see it within the next decade",
+          confidence: 0.82,
+          timestamp: 4500
+        },
+        {
+          type: "competitive" as const,
+          content: "DeepMind's approach to AGI is fundamentally different from OpenAI's - more focused on reasoning",
+          confidence: 0.87,
+          timestamp: 5200
+        }
+      ],
+      summary: "Deep technical discussion on AI progress, AGI timelines, and DeepMind's research philosophy",
+      key_insights: [
+        "AlphaFold has revolutionized biology - similar breakthroughs coming in other sciences",
+        "The path to AGI requires solving reasoning, not just scaling language models",
+        "AI safety becomes critical as we approach human-level intelligence"
+      ],
+      audio_url: null
+    },
+    {
+      episode_id: "mfm-side-hustles",
+      title: "5 Side Hustles That Could Make You $10k/Month",
+      podcast_name: "My First Million",
+      published_at: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString(), // 1.5 days ago
+      duration_seconds: 4200,
+      relevance_score: 0.75,
+      signals: [
+        {
+          type: "portfolio" as const,
+          content: "Discussion of ConvertKit's growth to $40M ARR as example of bootstrap success",
+          confidence: 0.85,
+          timestamp: 2100
+        }
+      ],
+      summary: "Exploration of emerging business opportunities in the creator economy and AI tools space",
+      key_insights: [
+        "AI automation agencies are the new hot opportunity",
+        "Newsletter businesses are still undervalued despite recent acquisitions",
+        "B2B SaaS for creators is a massive untapped market"
+      ],
+      audio_url: null
+    }
+  ];
+
+  return {
+    episodes,
+    total_episodes: episodes.length,
+    generated_at: now.toISOString()
+  };
 }

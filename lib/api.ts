@@ -2,10 +2,22 @@ import { TopicVelocityData } from "@/types/analytics";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://podinsight-api.vercel.app";
 
+// Helper to check if we're in demo mode (client-side only)
+function isInDemoMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('dataMode') === 'demo';
+}
+
 export async function fetchTopicVelocity(
   weeks: number = 12,
   topics?: string[]
 ): Promise<TopicVelocityData> {
+  // Use mock data in demo mode
+  if (isInDemoMode()) {
+    const { mockTopicVelocityData } = await import('@/mocks/topic-velocity-data');
+    return mockTopicVelocityData;
+  }
+
   const params = new URLSearchParams();
   params.append("weeks", weeks.toString());
   
@@ -51,6 +63,28 @@ export async function fetchSentimentAnalysis(
   weeks: number = 12,
   topics?: string[]
 ): Promise<SentimentAnalysisResponse> {
+  // Use mock data in demo mode
+  if (isInDemoMode()) {
+    const { mockSentimentData } = await import('@/mocks/sentiment-mock-data');
+    const topicsToUse = topics || ["AI Agents", "Capital Efficiency", "DePIN", "B2B SaaS", "Crypto/Web3"];
+    
+    // Filter data based on requested weeks and topics
+    const filteredData = mockSentimentData.filter(item => {
+      const weekNum = parseInt(item.week.substring(1));
+      return weekNum <= weeks && topicsToUse.includes(item.topic);
+    });
+    
+    return {
+      success: true,
+      data: filteredData,
+      metadata: {
+        weeks,
+        topics: topicsToUse,
+        generated_at: new Date().toISOString()
+      }
+    };
+  }
+
   const params = new URLSearchParams();
   params.append("weeks", weeks.toString());
   
