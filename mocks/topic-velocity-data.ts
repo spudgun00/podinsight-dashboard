@@ -13,29 +13,34 @@ export function generateMockTopicVelocityData(weeks: number = 12): TopicVelocity
     "Crypto/Web3": { base: 25, growth: 0.05, volatility: 10 }, // Volatile
   };
   
-  const dataPoints = [];
+  // Create data in the format expected by processApiResponse
+  // Each topic should have an array of {week, mentions, date} objects
+  const data: any = {};
   
-  for (let i = 0; i < weeks; i++) {
-    const weekNum = weeks - i;
-    const weekData: any = { week: `W${weekNum}` };
+  topics.forEach(topic => {
+    data[topic] = [];
+    const profile = topicProfiles[topic as keyof typeof topicProfiles];
     
-    topics.forEach(topic => {
-      const profile = topicProfiles[topic as keyof typeof topicProfiles];
+    for (let i = 0; i < weeks; i++) {
+      const weekNum = weeks - i;
+      const weekLabel = `2024-W${weekNum.toString().padStart(2, '0')}`;
       
       // Calculate value with growth and volatility
       const growthFactor = Math.pow(1 + profile.growth, i);
       const randomFactor = 1 + (Math.random() - 0.5) * profile.volatility / 100;
       const value = Math.round(profile.base * growthFactor * randomFactor);
       
-      weekData[topic] = Math.max(5, Math.min(100, value)); // Keep between 5-100
-    });
-    
-    dataPoints.unshift(weekData); // Add to beginning so W1 is first
-  }
+      data[topic].unshift({
+        week: weekLabel,
+        mentions: Math.max(5, Math.min(100, value)),
+        date: new Date(2024, 0, 1 + (weekNum - 1) * 7).toISOString()
+      });
+    }
+  });
   
   return {
     success: true,
-    data: dataPoints,
+    data,
     metadata: {
       weeks,
       topics,
@@ -48,14 +53,37 @@ export function generateMockTopicVelocityData(weeks: number = 12): TopicVelocity
 // Pre-generated data for consistent demo
 export const mockTopicVelocityData = generateMockTopicVelocityData(12);
 
-// Previous quarter comparison data
-export const mockPreviousQuarterData = generateMockTopicVelocityData(12).data.map(week => {
-  const prevWeek = { ...week };
-  // Reduce all values by 20-40% for previous quarter
-  Object.keys(prevWeek).forEach(key => {
-    if (key !== 'week' && typeof prevWeek[key] === 'number') {
-      prevWeek[key] = Math.round(prevWeek[key] * (0.6 + Math.random() * 0.2));
-    }
-  });
-  return prevWeek;
-});
+// Generate previous quarter data in the simple array format expected by the component
+export function generateMockPreviousQuarterData(weeks: number = 12) {
+  const topics = ["AI Agents", "Capital Efficiency", "DePIN", "B2B SaaS", "Crypto/Web3"];
+  const data = [];
+  
+  for (let i = 0; i < weeks; i++) {
+    const weekNum = weeks - i;
+    const weekData: any = { 
+      week: `W${weekNum}`,
+      fullWeek: `2024-W${weekNum.toString().padStart(2, '0')}`
+    };
+    
+    // Use lower base values for previous quarter
+    const baseValues = {
+      "AI Agents": 20,
+      "Capital Efficiency": 48,
+      "DePIN": 10,
+      "B2B SaaS": 30,
+      "Crypto/Web3": 20
+    };
+    
+    topics.forEach(topic => {
+      const base = baseValues[topic as keyof typeof baseValues];
+      const variance = 0.8 + Math.random() * 0.4; // 80-120% variance
+      weekData[topic] = Math.round(base * variance);
+    });
+    
+    data.unshift(weekData);
+  }
+  
+  return data;
+}
+
+export const mockPreviousQuarterData = generateMockPreviousQuarterData(12);
