@@ -740,7 +740,7 @@ export function IntelligenceBriefModal({ isOpen, onClose, episode }: Intelligenc
                                 <div className="flex-1">
                                   <div className="flex items-start justify-between gap-2">
                                     <p style={{ color: "#E9D5FF" }} className="font-medium">
-                                      {mention.company} mentioned as "category leader"
+                                      {mention.company} mentioned as {'"category leader"'}
                                     </p>
                                     <span 
                                       className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${
@@ -903,7 +903,7 @@ export function IntelligenceBriefModal({ isOpen, onClose, episode }: Intelligenc
                               <div className="flex-1">
                                 <div className="flex items-start justify-between gap-2">
                                   <p style={{ color: "#E9D5FF" }} className="font-medium">
-                                    {mention.company} mentioned as "category leader"
+                                    {mention.company} mentioned as {'"category leader"'}
                                   </p>
                                   <span 
                                     className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${

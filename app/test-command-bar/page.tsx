@@ -77,13 +77,13 @@ export default function TestCommandBarPage() {
             <p>• Type at least 4 characters to trigger search</p>
             <p>• Try these test queries with mock data:</p>
             <ul className="ml-6 space-y-1">
-              <li>- "AI agents" (trending topic with 4 citations)</li>
-              <li>- "venture capital valuations" (market insights)</li>
-              <li>- "startup funding" (funding environment)</li>
-              <li>- "DePIN infrastructure" (emerging tech)</li>
+              <li>- {'"AI agents"'} (trending topic with 4 citations)</li>
+              <li>- {'"venture capital valuations"'} (market insights)</li>
+              <li>- {'"startup funding"'} (funding environment)</li>
+              <li>- {'"DePIN infrastructure"'} (emerging tech)</li>
             </ul>
-            <p>• Toggle "Use Mock Data" to test with real API</p>
-            <p className="text-yellow-400 mt-2">⚠️ Note: Disable "Use Mock Data" to test audio playback functionality</p>
+            <p>• Toggle {'"Use Mock Data"'} to test with real API</p>
+            <p className="text-yellow-400 mt-2">⚠️ Note: Disable {'"Use Mock Data"'} to test audio playback functionality</p>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function TestCommandBarPage() {
             <div key={i} className="rounded-lg bg-gray-900/50 border border-gray-800 p-6">
               <h3 className="text-lg font-semibold text-white mb-2">Section {i}</h3>
               <p className="text-gray-400">
-                Scroll down to test the command bar's sticky behavior and keyboard shortcuts when scrolled past.
+                Scroll down to test the command bar&apos;s sticky behavior and keyboard shortcuts when scrolled past.
               </p>
             </div>
           ))}
