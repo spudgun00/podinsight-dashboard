@@ -13,7 +13,7 @@ import { IntelligenceBriefModal } from "@/components/intelligence/IntelligenceBr
 import { AllEpisodesView } from "@/components/intelligence/AllEpisodesView"
 import { useEffect, useState } from "react"
 import { fetchSentimentAnalysis, type SentimentData } from "@/lib/api"
-import type { Episode } from "@/lib/mock-episode-data"
+import type { Episode, SignalType } from "@/lib/mock-episode-data"
 import type { NewEpisode } from "@/lib/new-mock-episode-data"
 import { getDetailedEpisode } from "@/lib/mock-brief-data"
 
@@ -27,7 +27,7 @@ const convertNewEpisodeToEpisode = (newEpisode: NewEpisode): Episode => {
       newEpisode.signalType === 'INVESTABLE_SIGNAL' ? 'red_hot' :
       newEpisode.signalType === 'COMPETITIVE_INTEL' ? 'high_value' :
       'portfolio_mention'
-    ),
+    ) as SignalType,
     score: newEpisode.score,
     timeAgo: newEpisode.timeAgo || newEpisode.durationAgo,
     duration: newEpisode.duration || '45m',

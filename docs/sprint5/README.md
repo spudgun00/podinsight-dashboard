@@ -19,17 +19,21 @@ Implemented prewarming that triggers when users open the search modal, giving Mo
 
 ## Files in This Sprint
 
-### Documentation
-1. **[MODAL_PREWARMING_IMPLEMENTATION.md](./MODAL_PREWARMING_IMPLEMENTATION.md)**
-   - Complete implementation details
-   - Code changes and line numbers
-   - Testing instructions
-   - Cost analysis
+### Primary Documentation
+1. **[PREWARMING_TEST_GUIDE.md](./PREWARMING_TEST_GUIDE.md)** ⭐
+   - **START HERE** - Simple testing instructions
+   - How to verify prewarming is working
+   - Troubleshooting guide
 
-2. **[FRONTEND_PREWARM_IMPLEMENTATION.md](./FRONTEND_PREWARM_IMPLEMENTATION.md)**
-   - Original implementation guide from backend team
-   - Generic instructions for implementing prewarming
-   - Alternative approaches
+2. **[MODAL_PREWARMING_IMPLEMENTATION.md](./MODAL_PREWARMING_IMPLEMENTATION.md)**
+   - Complete technical implementation details
+   - Code changes and line numbers
+   - Cost analysis and architecture
+
+### Archive
+3. **[FRONTEND_PREWARM_IMPLEMENTATION.md](./FRONTEND_PREWARM_IMPLEMENTATION.md)**
+   - Original generic guide from backend team
+   - Kept for historical reference
 
 ## Key Achievements
 - ✅ Eliminated 18-second cold start delay
@@ -38,13 +42,10 @@ Implemented prewarming that triggers when users open the search modal, giving Mo
 - ✅ 80-90% cost reduction vs always-warm approach
 - ✅ Cleaned up git history from previous failed attempt
 
-## Testing Checklist
-- [ ] Open DevTools Network tab
-- [ ] Click floating brain button (🧠)
-- [ ] Verify POST to `/api/prewarm`
-- [ ] Check console for "Pre-warming backend..." message
-- [ ] Test cooldown by reopening within 3 minutes
-- [ ] Verify fast search response
+## Quick Test
+See **[PREWARMING_TEST_GUIDE.md](./PREWARMING_TEST_GUIDE.md)** for detailed testing instructions.
+
+**TL;DR**: Open DevTools → Click 🧠 button → Check for `/api/prewarm` request → Search should be fast!
 
 ## Next Steps
 The prewarming implementation is complete and deployed. Potential future enhancements:
