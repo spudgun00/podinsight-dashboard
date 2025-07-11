@@ -23,9 +23,10 @@ const convertNewEpisodeToEpisode = (newEpisode: NewEpisode): Episode => {
     id: newEpisode.id,
     title: newEpisode.episodeTitle,
     abbreviation: newEpisode.abbreviation || 'AI',
-    signal: newEpisode.signal || (
+    signal: (
       newEpisode.signalType === 'INVESTABLE_SIGNAL' ? 'red_hot' :
       newEpisode.signalType === 'COMPETITIVE_INTEL' ? 'high_value' :
+      newEpisode.signalType === 'MARKET_INTEL' ? 'market_intel' :
       'portfolio_mention'
     ) as SignalType,
     score: newEpisode.score,
